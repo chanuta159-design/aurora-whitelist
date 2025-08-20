@@ -1,7 +1,4 @@
 {
-  "version": 1,
-  "authorized_packages": [
     "org.mozilla.firefox",
     "com.whatsapp"
-  ]
 }
