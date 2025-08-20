@@ -1,4 +1,4 @@
-{
-    "org.mozilla.firefox",
-    "com.whatsapp"
-}
+[
+  "org.mozilla.firefox",
+  "com.whatsapp"
+]
