@@ -16,13 +16,18 @@ export default async function handler(request, response) {
         });
 
         const tokenData = await tokenResponse.json();
+
+        // --- THIS IS THE NEW DEBUGGING LINE ---
+        // It will print the exact response from GitHub to your Vercel logs.
+        console.log("GitHub's Raw Response:", JSON.stringify(tokenData, null, 2));
+
         const accessToken = tokenData.access_token;
 
         if (!accessToken) {
-            throw new Error('Failed to retrieve access token from GitHub.');
+            // This error will still happen, but now the log above will tell us why.
+            throw new Error('Failed to retrieve access token from GitHub. Check Vercel logs for details.');
         }
 
-        // Send the token back to the front-end as JSON data
         response.status(200).json({ token: accessToken });
 
     } catch (error) {
