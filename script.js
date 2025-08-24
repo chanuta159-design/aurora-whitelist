@@ -65,10 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Please enter your GitHub Username and Repository name.');
             return;
         }
-        if (GITHUB_CLIENT_ID === 'Iv23liG4e2UjaVjKhUSa') {
-            alert('ERROR: GITHUB_CLIENT_ID is not set in script.js');
-            return;
-        }
+       
         localStorage.setItem('githubUser', githubUser);
         localStorage.setItem('githubRepo', githubRepo);
         window.location.href = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=repo`;
