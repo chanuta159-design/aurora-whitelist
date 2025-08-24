@@ -140,7 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const item = document.createElement('div');
                 item.className = 'search-result-item';
                 item.innerHTML = `<div class="app-info"><strong>${title}</strong><small>${id}</small></div><button>Add</button>`;
-                item.querySelector('button').addEventListener('click', () => addApp(id, title)); // Pass title here
+                item.querySelector('button').addEventListener('click', () => {
+                addApp(id, title);
+                searchResultsDiv.style.display = 'none'; // Hide results after adding
+                });
                 searchResultsDiv.appendChild(item);
             } catch (e) { }
         });
