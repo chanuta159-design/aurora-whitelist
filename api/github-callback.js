@@ -9,8 +9,8 @@ export default async function handler(request, response) {
     }
 
     try {
-        // --- THIS IS THE CORRECTED URL ---
-        const tokenResponse = await fetch('https://api.github.com/login/oauth/access_token', {
+        // --- THIS IS THE CORRECTED URL, CHANGED BACK TO GITHUB.COM ---
+        const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -24,8 +24,7 @@ export default async function handler(request, response) {
 
         const accessToken = tokenData.access_token;
         if (!accessToken) {
-            // Include GitHub's error in our response for better debugging
-            const errorMessage = tokenData.error_description || 'Failed to retrieve access token. Check Vercel logs.';
+            const errorMessage = tokenData.error_description || 'Failed to retrieve access token. Check Vercel logs and GitHub OAuth App settings.';
             throw new Error(errorMessage);
         }
 
