@@ -4,6 +4,10 @@ export default async function handler(request, response) {
     const client_id = process.env.GITHUB_CLIENT_ID;
     const client_secret = process.env.GITHUB_CLIENT_SECRET;
 
+    if (!code) {
+        return response.status(400).json({ error: 'No code provided.' });
+    }
+
     try {
         const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
             method: 'POST',
@@ -15,15 +19,14 @@ export default async function handler(request, response) {
         const accessToken = tokenData.access_token;
 
         if (!accessToken) {
-            throw new Error('Failed to retrieve access token.');
+            throw new Error('Failed to retrieve access token from GitHub.');
         }
 
-        // Redirect back to the homepage, passing the token in the URL hash
-        // The front-end will grab it from here and save it to localStorage.
-        response.redirect(`/?token=${accessToken}`);
+        // Send the token back to the front-end as JSON data
+        response.status(200).json({ token: accessToken });
 
     } catch (error) {
-        console.error(error);
-        response.status(500).send('Authentication failed.');
+        console.error('Error in GitHub callback:', error);
+        response.status(500).json({ error: 'Authentication failed.' });
     }
 }
