@@ -10,30 +10,6 @@
 
     <!-- The Editor (hidden by default) -->
     <div id="appContainer" style="display: none;">
-        <!-- ... content is the same as before ... -->
-    </div>
-
-    <!-- The Login Screen (shown by default) -->
-    <div id="loginContainer" class="login-container">
-        <h1>Welcome to the Whitelist Editor</h1>
-        <p>Please log in with your GitHub account to manage your `whitelist.json` file.</p>
-        <div class="login-form">
-            <input type="text" id="githubUser" placeholder="Your GitHub Username">
-            <input type="text" id="githubRepo" placeholder="Repository Name">
-            <button id="loginButton">Login with GitHub</button>
-        </div>
-    </div>
-
-    <!-- NEW: The Access Denied Screen (hidden by default) -->
-    <div id="accessDeniedContainer" class="login-container" style="display: none;">
-        <h1>Access Denied</h1>
-        <p>The GitHub account you logged in with does not have permission to use this tool.</p>
-        <p>Please log in with an authorized account.</p>
-        <button id="deniedLogoutButton">Logout</button>
-    </div>
-
-    <!-- The rest of the HTML structure is the same... -->
-    <div id="appContainer" style="display: none;">
         <div class="container">
             <header>
                 <h1>Aurora Store Whitelist Manager</h1>
@@ -64,6 +40,25 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- The Login Screen (shown by default) -->
+    <div id="loginContainer" class="login-container">
+        <h1>Welcome to the Whitelist Editor</h1>
+        <p>Please log in with your GitHub account to manage your `whitelist.json` file.</p>
+        <div class="login-form">
+            <input type="text" id="githubUser" placeholder="Your GitHub Username">
+            <input type="text" id="githubRepo" placeholder="Repository Name">
+            <button id="loginButton">Login with GitHub</button>
+        </div>
+    </div>
+
+    <!-- The Access Denied Screen (hidden by default) -->
+    <div id="accessDeniedContainer" class="login-container" style="display: none;">
+        <h1>Access Denied</h1>
+        <p>The GitHub account you logged in with does not have permission to use this tool.</p>
+        <p>Please log in with an authorized account.</p>
+        <button id="deniedLogoutButton">Logout</button>
     </div>
 
     <script src="script.js"></script>
