@@ -26,8 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const githubRepoInput = document.getElementById('githubRepo');
 
     // --- GOOGLE API & GITHUB OAUTH CREDENTIALS ---
-    const GOOGLE_API_KEY = 'AIzaSyDJOTpSjqi5PEew0nMJ2clRQFtJye9ByhU';
-    const SEARCH_ENGINE_ID = 'd3210826cacdd48ee';
+    const GOOGLE_API_KEY = 'AIzaSyD3YjTEIwAnBBIV7LzuRcQVHmTTB27og9o';
+    const SEARCH_ENGINE_ID = 'b769d79cff32c40de';
     const GITHUB_CLIENT_ID = 'Ov23li1YXH2AXhWQAgER';
 
     // --- UI LOGIC ---
