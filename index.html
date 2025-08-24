@@ -8,7 +8,7 @@
 </head>
 <body>
 
-    <!-- The Editor (hidden by default) -->
+    <!-- The Editor -->
     <div id="appContainer" style="display: none;">
         <div class="container">
             <header>
@@ -42,23 +42,23 @@
         </div>
     </div>
 
-    <!-- The Login Screen (shown by default) -->
+    <!-- The Login Screen -->
     <div id="loginContainer" class="login-container">
-    <h1>Whitelist Editor</h1>
-    <p>Please log in to manage the whitelist.</p>
-    <button id="loginButton">Login with GitHub</button>
+        <h1>Whitelist Editor</h1>
+        <p>Please log in to manage the whitelist.</p>
+        <button id="loginButton">Login with GitHub</button>
     </div>
 
-    <!-- The Access Denied Screen (hidden by default) -->
+    <!-- The Access Denied Screen -->
     <div id="accessDeniedContainer" class="login-container" style="display: none;">
-    <h1>Access Denied</h1>
-    <p>The GitHub account you logged in with is not authorized.</p>
-    <div class="denied-actions">
-        <button id="deniedLogoutButton">Try Again</button>
-        <a href="https://github.com/logout" target="_blank" class="github-logout-link">Logout from GitHub</a>
+        <h1>Access Denied</h1>
+        <p>The GitHub account you logged in with is not authorized.</p>
+        <div class="denied-actions">
+            <button id="deniedLogoutButton">Try Again</button>
+            <a href="https://github.com/logout" target="_blank" class="github-logout-link">Logout from GitHub</a>
+        </div>
+        <p class="small-text">Note: Logging out from GitHub will end all your active sessions.</p>
     </div>
-    <p class="small-text">Note: Logging out from GitHub will end all your active sessions.</p>
-</div>
 
     <script src="script.js"></script>
 </body>
