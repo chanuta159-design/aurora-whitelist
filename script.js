@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const SEARCH_ENGINE_ID = 'd3210826cacdd48ee';
 
     // --- GITHUB OAUTH APP CLIENT ID ---
-    // IMPORTANT: Make sure you have replaced this with your real Client ID
+    // Make sure you have replaced this with your real Client ID from your GitHub OAuth App
     const GITHUB_CLIENT_ID = 'Iv23liG4e2UjaVjKhUSa';
 
     // --- UI LOGIC ---
@@ -41,6 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const showLogin = () => {
         appContainer.style.display = 'none';
         loginContainer.style.display = 'block';
+        // Pre-fill fields from localStorage if they exist
+        githubUserInput.value = localStorage.getItem('githubUser') || '';
+        githubRepoInput.value = localStorage.getItem('githubRepo') || '';
     };
 
     // --- CORE FUNCTIONS ---
@@ -59,15 +62,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- AUTHENTICATION LOGIC ---
     const handleLogin = () => {
-        githubUser = githubUserInput.value.trim();
-        githubRepo = githubRepoInput.value.trim();
-        if (!githubUser || !githubRepo) {
+        const user = githubUserInput.value.trim();
+        const repo = githubRepoInput.value.trim();
+        if (!user || !repo) {
             alert('Please enter your GitHub Username and Repository name.');
             return;
         }
-       
-        localStorage.setItem('githubUser', githubUser);
-        localStorage.setItem('githubRepo', githubRepo);
+        // Save user/repo to localStorage BEFORE redirecting
+        localStorage.setItem('githubUser', user);
+        localStorage.setItem('githubRepo', repo);
         window.location.href = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=repo`;
     };
     
@@ -75,20 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('githubToken');
         localStorage.removeItem('githubUser');
         localStorage.removeItem('githubRepo');
-        window.location.href = window.location.pathname; // Go to clean login page
-    };
-
-    const checkLoginStatus = () => {
-        githubToken = localStorage.getItem('githubToken');
-        githubUser = localStorage.getItem('githubUser');
-        githubRepo = localStorage.getItem('githubRepo');
-        if (githubToken && githubUser && githubRepo) {
-            githubUserInput.value = githubUser;
-            githubRepoInput.value = githubRepo;
-            showEditor();
-        } else {
-            showLogin();
-        }
+        window.location.href = window.location.pathname;
     };
 
     // --- INITIALIZATION ---
@@ -97,31 +87,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const codeFromRedirect = urlParams.get('code');
 
         if (codeFromRedirect) {
-            // If there's a code, we are coming back from GitHub
             loginContainer.innerHTML = '<h1>Authenticating... Please wait.</h1>';
             try {
-                // Call our backend to exchange the code for a token
                 const response = await fetch(`/api/github-callback?code=${codeFromRedirect}`);
                 if (!response.ok) throw new Error('Authentication failed on the server.');
-                
                 const data = await response.json();
                 if (data.token) {
                     localStorage.setItem('githubToken', data.token);
-                    // Clean the URL and check login status again
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    checkLoginStatus();
+                    // Crucial: Clean the URL and restart the init process from the top
+                    window.location.href = window.location.pathname;
                 } else {
                     throw new Error('Token was not returned from the server.');
                 }
             } catch (error) {
                 alert('An error occurred during login. Please try again.');
                 console.error(error);
-                // Go back to the clean login page on failure
                 window.location.href = window.location.pathname;
             }
         } else {
-            // If there's no code, just check if we are already logged in
-            checkLoginStatus();
+            // This is the normal flow for a user who is already logged in or needs to log in.
+            githubToken = localStorage.getItem('githubToken');
+            githubUser = localStorage.getItem('githubUser');
+            githubRepo = localStorage.getItem('githubRepo');
+
+            if (githubToken && githubUser && githubRepo) {
+                showEditor();
+            } else {
+                showLogin();
+            }
         }
     };
     
