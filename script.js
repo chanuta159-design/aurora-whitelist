@@ -9,6 +9,21 @@ document.addEventListener('DOMContentLoaded', () => {
     let authorizedApps = [], appNames = [], debounceTimer, fileSHA, namesFileSHA, githubToken = null, githubUser = '', githubRepo = ''; // The packageNameMap is no longer needed, as appNames replaces it.
 
     // --- DOM ELEMENT REFERENCES ---
+    // --- NEW HELPER FUNCTIONS FOR UNICODE ---
+const encodeUnicode = (str) => {
+    // First, URI-encode the string to handle Unicode characters, then convert to a format btoa can handle.
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+        function toSolidBytes(match, p1) {
+            return String.fromCharCode('0x' + p1);
+    }));
+}
+
+const decodeUnicode = (str) => {
+    // First, decode from base64, then decode the URI-encoded parts to get the original Unicode string.
+    return decodeURIComponent(atob(str).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+}
     const appContainer = document.getElementById('appContainer');
     const loginContainer = document.getElementById('loginContainer');
     const accessDeniedContainer = document.getElementById('accessDeniedContainer');
@@ -93,7 +108,7 @@ const removeApp = (pkg) => {
         if (packageRes.ok) {
             const data = await packageRes.json();
             fileSHA = data.sha;
-            authorizedApps = JSON.parse(atob(data.content));
+            authorizedApps = JSON.parse(decodeUnicode(data.content));
         } else {
             // If the main whitelist doesn't exist, start with an empty list
             fileSHA = null;
@@ -104,7 +119,7 @@ const removeApp = (pkg) => {
         if (namesRes.ok) {
             const data = await namesRes.json();
             namesFileSHA = data.sha;
-            appNames = JSON.parse(atob(data.content));
+            appNames = JSON.parse(decodeUnicode(data.content));
         } else {
             // If the names file doesn't exist, start with an empty list
             namesFileSHA = null;
@@ -138,7 +153,7 @@ const saveWhitelistToGitHub = async () => {
         const packageContent = JSON.stringify(authorizedApps, null, 2);
         const packageBody = {
             message: 'Updated whitelist packages via online editor',
-            content: btoa(packageContent),
+            content: encodeUnicode(packageContent),
             sha: fileSHA
         };
         const packageRes = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/whitelist.json`, {
@@ -154,7 +169,7 @@ const saveWhitelistToGitHub = async () => {
         const namesContent = JSON.stringify(appNames, null, 2);
         const namesBody = {
             message: 'Updated whitelist names via online editor',
-            content: btoa(namesContent),
+            content: encodeUnicode(namesContent),
             sha: namesFileSHA
         };
         const namesRes = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-names.json`, {
