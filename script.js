@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- GITHUB OAUTH APP CLIENT ID ---
     // Make sure you have replaced this with your real Client ID from your GitHub OAuth App
-    const GITHUB_CLIENT_ID = 'Iv23liG4e2UjaVjKhUSa';
+    const GITHUB_CLIENT_ID = 'Ov23li1YXH2AXhWQAgER';
 
     // --- UI LOGIC ---
     const showEditor = () => {
