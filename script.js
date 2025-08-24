@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURATION ---
     // This is the list of GitHub usernames that are allowed to use the editor.
     const ALLOWED_USERS = ['lilor159357']; // Add more usernames here if needed
-    const ALLOWED_USERS = ['lilor159357'];
     const GITHUB_USER = 'lilor159357'; // Your GitHub username
     const GITHUB_REPO = 'aurora-whitelist'; // The name of your repository
     // --- STATE MANAGEMENT ---
