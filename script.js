@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- STATE MANAGEMENT ---
     // MODIFICATION: Added packageNameMap to cache app names
-    let authorizedApps = [], debounceTimer, fileSHA, githubToken = null, githubUser = '', githubRepo = '', packageNameMap = {};
+    let authorizedApps = [], appNames = [], debounceTimer, fileSHA, namesFileSHA, githubToken = null, githubUser = '', githubRepo = ''; // The packageNameMap is no longer needed, as appNames replaces it.
 
     // --- DOM ELEMENT REFERENCES ---
     const appContainer = document.getElementById('appContainer');
@@ -40,66 +40,137 @@ document.addEventListener('DOMContentLoaded', () => {
     // MODIFICATION: renderList now uses packageNameMap to show friendly names.
     // It also includes the package name in a smaller font for clarity.
     const renderList = () => {
-        currentListDiv.innerHTML = '';
-        authorizedApps.forEach(pkg => {
-            const displayName = packageNameMap[pkg] || pkg; // Use cached name or fallback to package name
-            const item = document.createElement('div');
-            item.className = 'list-item';
-            // Display friendly name prominently, with package name below
-            item.innerHTML = `<div class="app-info"><strong>${displayName}</strong><small style="display: block; opacity: 0.7;">${pkg}</small></div><button><span>Remove</span></button>`;
-            item.querySelector('button').addEventListener('click', () => removeApp(pkg));
-            currentListDiv.appendChild(item);
-        });
-    };
+    currentListDiv.innerHTML = '';
+    authorizedApps.forEach((pkg, index) => {
+        const displayName = appNames[index] || pkg; // Use the name from our list, or fallback to the package name
+        const item = document.createElement('div');
+        item.className = 'list-item';
+        item.innerHTML = `<div class="app-info"><strong>${displayName}</strong><small style="display: block; opacity: 0.7;">${pkg}</small></div><button><span>Remove</span></button>`;
+        item.querySelector('button').addEventListener('click', () => removeApp(pkg));
+        currentListDiv.appendChild(item);
+    });
+};
 
     // MODIFICATION: addApp now accepts a 'title' to store in the name cache.
     const addApp = (pkg, title) => {
-        if (pkg && !authorizedApps.includes(pkg)) {
-            authorizedApps.push(pkg);
-            if (title) {
-                packageNameMap[pkg] = title; // Cache the name
-            }
-            authorizedApps.sort();
-            renderList();
-        } else {
-            alert(`${pkg} is already in the list.`);
-        }
-    };
+    if (pkg && !authorizedApps.includes(pkg)) {
+        authorizedApps.push(pkg);
+        appNames.push(title); // Add the name to the parallel array
+        renderList();
+    } else {
+        alert(`${title} (${pkg}) is already in the list.`);
+    }
+};
 
-    const removeApp = (pkg) => { authorizedApps = authorizedApps.filter(app => app !== pkg); renderList(); };
+const removeApp = (pkg) => {
+    const indexToRemove = authorizedApps.indexOf(pkg);
+    if (indexToRemove > -1) {
+        authorizedApps.splice(indexToRemove, 1); // Remove package
+        appNames.splice(indexToRemove, 1);       // Remove name at the same index
+    }
+    renderList();
+};
     const showStatus = (msg, isErr) => { statusMessage.textContent = msg; statusMessage.className = isErr ? 'status-message error' : 'status-message success'; setTimeout(() => statusMessage.textContent = '', 4000); };
 
     // --- GITHUB API FUNCTIONS ---
 
     // MODIFICATION: After loading the whitelist, it now fetches the app names.
     const loadWhitelistFromGitHub = async () => {
-        if (!githubUser || !githubRepo) return;
-        showStatus('Loading whitelist...');
-        try {
-            const res = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/whitelist.json`, { headers: { 'Authorization': `token ${githubToken}` } });
-            if (!res.ok) {
-                if (res.status === 404) {
-                    showStatus('whitelist.json not found.', true);
-                    authorizedApps = [];
-                    fileSHA = null;
-                } else {
-                    throw new Error(res.statusText);
-                }
-            } else {
-                const data = await res.json();
-                fileSHA = data.sha;
-                authorizedApps = JSON.parse(atob(data.content));
-                showStatus('Loaded successfully!');
-            }
-            renderList(); // Render once with package names
-            fetchAppNamesForWhitelist(); // Then, fetch and update with real names
-        } catch (err) {
-            showStatus(err.message, true);
+    if (!githubUser || !githubRepo) return;
+    showStatus('Loading whitelist...');
+
+    const packageUrl = `https://api.github.com/repos/${githubUser}/${githubRepo}/contents/whitelist.json`;
+    const namesUrl = `https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-names.json`;
+    const headers = { 'Authorization': `token ${githubToken}` };
+
+    try {
+        const [packageRes, namesRes] = await Promise.all([
+            fetch(packageUrl, { headers }),
+            fetch(namesUrl, { headers })
+        ]);
+
+        // Process packages file (whitelist.json)
+        if (packageRes.ok) {
+            const data = await packageRes.json();
+            fileSHA = data.sha;
+            authorizedApps = JSON.parse(atob(data.content));
+        } else {
+            // If the main whitelist doesn't exist, start with an empty list
+            fileSHA = null;
+            authorizedApps = [];
         }
-    };
 
-    const saveWhitelistToGitHub = async () => { if (!githubUser || !githubRepo || !githubToken) { showStatus('Auth error.', true); return; } showStatus('Saving...'); const content = JSON.stringify(authorizedApps, null, 2); const body = { message: 'Updated whitelist via online editor', content: btoa(content), sha: fileSHA }; try { const res = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/whitelist.json`, { method: 'PUT', headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const data = await res.json(); if (!res.ok) throw new Error(data.message); fileSHA = data.content.sha; showStatus('Saved successfully!'); } catch (err) { showStatus(err.message, true); } };
+        // Process names file (app-names.json)
+        if (namesRes.ok) {
+            const data = await namesRes.json();
+            namesFileSHA = data.sha;
+            appNames = JSON.parse(atob(data.content));
+        } else {
+            // If the names file doesn't exist, start with an empty list
+            namesFileSHA = null;
+            appNames = [];
+        }
 
+        // Important: Ensure lists are synchronized
+        if (authorizedApps.length !== appNames.length) {
+            showStatus('Warning: Whitelist files are out of sync! Please check your repo.', true);
+            // As a fallback, we can create placeholder names
+            appNames = authorizedApps.map(pkg => pkg); 
+        }
+
+        showStatus('Loaded successfully!');
+        renderList();
+
+    } catch (err) {
+        showStatus(`Error loading files: ${err.message}`, true);
+    }
+};
+
+const saveWhitelistToGitHub = async () => {
+    if (!githubUser || !githubRepo || !githubToken) {
+        showStatus('Authentication error.', true);
+        return;
+    }
+    showStatus('Saving...');
+
+    try {
+        // --- Save whitelist.json ---
+        const packageContent = JSON.stringify(authorizedApps, null, 2);
+        const packageBody = {
+            message: 'Updated whitelist packages via online editor',
+            content: btoa(packageContent),
+            sha: fileSHA
+        };
+        const packageRes = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/whitelist.json`, {
+            method: 'PUT',
+            headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(packageBody)
+        });
+        const packageData = await packageRes.json();
+        if (!packageRes.ok) throw new Error(`Failed to save whitelist.json: ${packageData.message}`);
+        fileSHA = packageData.content.sha; // Update the SHA
+
+        // --- Save app-names.json ---
+        const namesContent = JSON.stringify(appNames, null, 2);
+        const namesBody = {
+            message: 'Updated whitelist names via online editor',
+            content: btoa(namesContent),
+            sha: namesFileSHA
+        };
+        const namesRes = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-names.json`, {
+            method: 'PUT',
+            headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(namesBody)
+        });
+        const namesData = await namesRes.json();
+        if (!namesRes.ok) throw new Error(`Failed to save app-names.json: ${namesData.message}`);
+        namesFileSHA = namesData.content.sha; // Update the SHA
+
+        showStatus('Saved successfully!');
+    } catch (err) {
+        showStatus(err.message, true);
+    }
+};
     // --- GOOGLE SEARCH API FUNCTIONS ---
     
     // NEW FUNCTION: Fetches the name for a single package ID and caches it.
