@@ -2,7 +2,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURATION ---
     // This is the list of GitHub usernames that are allowed to use the editor.
     const ALLOWED_USERS = ['lilor159357']; // Add more usernames here if needed
-
+    const ALLOWED_USERS = ['lilor159357'];
+    const GITHUB_USER = 'lilor159357'; // Your GitHub username
+    const GITHUB_REPO = 'aurora-whitelist'; // The name of your repository
     // --- STATE MANAGEMENT ---
     let authorizedApps = [], debounceTimer, fileSHA, githubToken = null, githubUser = '', githubRepo = '';
 
@@ -49,13 +51,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- AUTHENTICATION LOGIC ---
     const handleLogin = () => {
-        const user = githubUserInput.value.trim();
-        const repo = githubRepoInput.value.trim();
-        if (!user || !repo) { alert('Please enter Username and Repository.'); return; }
-        localStorage.setItem('githubUser', user);
-        localStorage.setItem('githubRepo', repo);
-        window.location.href = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=repo`;
-    };
+    // We now use the constants defined at the top of the script
+    localStorage.setItem('githubUser', GITHUB_USER);
+    localStorage.setItem('githubRepo', GITHUB_REPO);
+    window.location.href = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=repo`;
+};
     
     const handleLogout = () => {
         localStorage.clear();
