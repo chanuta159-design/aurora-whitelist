@@ -1,25 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aurora Store Whitelist Manager</title>
+    <title>מנהל רשימה לבנה של Aurora Store</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- The Editor (hidden by default) -->
+    <!-- העורך (מוסתר כברירת מחדל) -->
     <div id="appContainer" style="display: none;">
         <div class="container">
             <header>
-                <h1>Aurora Store Whitelist Manager</h1>
-                <p>A simple tool to search for apps and manage your `whitelist.json` file.</p>
+                <h1>מנהל רשימה לבנה של Aurora Store</h1>
+                <p>כלי פשוט לחיפוש אפליקציות וניהול קובץ ה-`whitelist.json` שלך.</p>
             </header>
             <main class="main-content">
-                <h2><span class="step">1</span> Search for Apps</h2>
+                <h2><span class="step">1</span> חיפוש אפליקציות</h2>
                 <div class="search-wrapper">
                     <div class="search-container">
-                        <input type="text" id="searchInput" placeholder="e.g., WhatsApp, Waze..." autocomplete="off">
+                        <input type="text" id="searchInput" placeholder="לדוגמה, WhatsApp, Waze..." autocomplete="off">
                     </div>
                     <div id="searchResults" class="results-container"></div>
                 </div>
@@ -28,37 +28,37 @@
         <div class="tray-container">
             <div class="tray-content">
                 <div class="tray-section whitelist-section">
-                    <h2><span class="step">2</span> Your Whitelist (<span id="repoName"></span>)</h2>
+                    <h2><span class="step">2</span> הרשימה הלבנה שלך (<span id="repoName"></span>)</h2>
                     <div id="currentList" class="current-list-container"></div>
-                    <p class="empty-list-message">Loading from GitHub or your list is empty...</p>
+                    <p class="empty-list-message">טוען מ-GitHub או שהרשימה שלך ריקה...</p>
                 </div>
                 <div class="tray-section github-section">
-                    <h2><span class="step">3</span> Save Changes</h2>
-                    <button id="saveButton">Save to GitHub</button>
-                    <button id="logoutButton">Logout</button>
+                    <h2><span class="step">3</span> שמירת שינויים</h2>
+                    <button id="saveButton">שמור ל-GitHub</button>
+                    <button id="logoutButton">התנתק</button>
                     <div id="statusMessage" class="status-message"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- The Login Screen (shown by default) -->
+    <!-- מסך הכניסה (גלוי כברירת מחדל) -->
     <div id="loginContainer" class="login-container">
-    <h1>Whitelist Editor</h1>
-    <p>Please log in to manage the whitelist.</p>
-    <button id="loginButton">Login with GitHub</button>
+        <h1>עורך הרשימה הלבנה</h1>
+        <p>אנא התחבר כדי לנהל את הרשימה הלבנה.</p>
+        <button id="loginButton">התחבר עם GitHub</button>
     </div>
 
-    <!-- The Access Denied Screen (hidden by default) -->
+    <!-- מסך גישה נדחתה (מוסתר כברירת מחדל) -->
     <div id="accessDeniedContainer" class="login-container" style="display: none;">
-    <h1>Access Denied</h1>
-    <p>The GitHub account you logged in with is not authorized.</p>
-    <div class="denied-actions">
-        <button id="deniedLogoutButton">Try Again</button>
-        <a href="https://github.com/logout" target="_blank" class="github-logout-link">Logout from GitHub</a>
+        <h1>הגישה נדחתה</h1>
+        <p>חשבון ה-GitHub שאיתו התחברת אינו מורשה.</p>
+        <div class="denied-actions">
+            <button id="deniedLogoutButton">נסה שוב</button>
+            <a href="https://github.com/logout" target="_blank" class="github-logout-link">התנתק מ-GitHub</a>
+        </div>
+        <p class="small-text">שים לב: התנתקות מ-GitHub תסיים את כל החיבורים הפעילים שלך.</p>
     </div>
-    <p class="small-text">Note: Logging out from GitHub will end all your active sessions.</p>
-</div>
 
     <script src="script.js"></script>
 </body>
