@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const saveWhitelistToGitHub = async () => { if (!githubUser || !githubRepo || !githubToken) { showStatus('Auth error.', true); return; } showStatus('שומר...'); const content = JSON.stringify(authorizedApps, null, 2); const body = { message: 'Updated whitelist via online editor', content: btoa(content), sha: fileSHA }; try { const res = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/whitelist.json`, { method: 'PUT', headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const data = await res.json(); if (!res.ok) throw new Error(data.message); fileSHA = data.content.sha; showStatus('נשמר בהצלחה!'); } catch (err) { showStatus(err.message, true); } };
+    const saveWhitelistToGitHub = async () => { if (!githubUser || !githubRepo || !githubToken) { showStatus('Auth error.', true); return; } showStatus('Saving...'); const content = JSON.stringify(authorizedApps, null, 2); const body = { message: 'Updated whitelist via online editor', content: btoa(content), sha: fileSHA }; try { const res = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/whitelist.json`, { method: 'PUT', headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const data = await res.json(); if (!res.ok) throw new Error(data.message); fileSHA = data.content.sha; showStatus('Saved successfully!'); } catch (err) { showStatus(err.message, true); } };
 
     // --- GOOGLE SEARCH API FUNCTIONS ---
     
