@@ -51,11 +51,14 @@
 
     <!-- The Access Denied Screen (hidden by default) -->
     <div id="accessDeniedContainer" class="login-container" style="display: none;">
-        <h1>Access Denied</h1>
-        <p>The GitHub account you logged in with does not have permission to use this tool.</p>
-        <p>Please log in with an authorized account.</p>
-        <button id="deniedLogoutButton">Logout</button>
+    <h1>Access Denied</h1>
+    <p>The GitHub account you logged in with is not authorized.</p>
+    <div class="denied-actions">
+        <button id="deniedLogoutButton">Try Again</button>
+        <a href="https://github.com/logout" target="_blank" class="github-logout-link">Logout from GitHub</a>
     </div>
+    <p class="small-text">Note: Logging out from GitHub will end all your active sessions.</p>
+</div>
 
     <script src="script.js"></script>
 </body>
