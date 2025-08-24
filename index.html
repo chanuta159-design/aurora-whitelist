@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurora Store Whitelist Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Aurora Store Whitelist Manager</h1>
+            <p>A simple tool to search for apps and manage your `whitelist.json` file.</p>
+        </header>
+
+        <main class="main-content">
+            <h2><span class="step">1</span> Search for Apps</h2>
+            
+            <!-- This new wrapper is the key to the new layout -->
+            <div class="search-wrapper">
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="e.g., WhatsApp, Waze..." autocomplete="off">
+                </div>
+                <!-- The results box is now INSIDE the wrapper -->
+                <div id="searchResults" class="results-container">
+                    <!-- Search results will appear here -->
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div class="tray-container">
+        <!-- The tray content remains exactly the same -->
+        <div class="tray-content">
+            <div class="tray-section">
+                <h2><span class="step">2</span> Your Whitelist</h2>
+                <div id="currentList" class="current-list-container"></div>
+                <p class="empty-list-message">Your list is empty. Search for an app to get started!</p>
+            </div>
+            <div class="tray-section">
+                <h2><span class="step">3</span> Generate Your JSON</h2>
+                <div class="json-io-container">
+                    <textarea id="jsonInput" placeholder='Paste your JSON here and click "Load List"'></textarea>
+                    <textarea id="jsonOutput" readonly placeholder="Your generated JSON will appear here..."></textarea>
+                </div>
+                <div class="button-group">
+                    <button id="loadButton">Load List</button>
+                    <button id="generateButton">Generate & Copy JSON</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
