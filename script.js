@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURATION ---
     // This is the list of GitHub usernames that are allowed to use the editor.
-    const ALLOWED_USERS = ['lilor159357']; // Add more usernames here if needed, e.g., ['lilor159357', 'anotherUser']
+    const ALLOWED_USERS = ['lilor159357']; // Add more usernames here if needed
 
     // --- STATE MANAGEMENT ---
     let authorizedApps = [], debounceTimer, fileSHA, githubToken = null, githubUser = '', githubRepo = '';
@@ -33,14 +33,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const showLogin = () => { appContainer.style.display = 'none'; accessDeniedContainer.style.display = 'none'; loginContainer.style.display = 'block'; githubUserInput.value = localStorage.getItem('githubUser') || ''; githubRepoInput.value = localStorage.getItem('githubRepo') || ''; };
     const showAccessDenied = () => { appContainer.style.display = 'none'; loginContainer.style.display = 'none'; accessDeniedContainer.style.display = 'block'; };
 
-    // --- CORE & API FUNCTIONS (condensed for clarity, they are correct) ---
+    // --- CORE FUNCTIONS ---
     const renderList = () => { currentListDiv.innerHTML = ''; authorizedApps.forEach(pkg => { const item = document.createElement('div'); item.className = 'list-item'; item.innerHTML = `<div class="app-info"><strong>${pkg}</strong></div><button><span>Remove</span></button>`; item.querySelector('button').addEventListener('click', () => removeApp(pkg)); currentListDiv.appendChild(item); }); };
     const addApp = (pkg) => { if (pkg && !authorizedApps.includes(pkg)) { authorizedApps.push(pkg); authorizedApps.sort(); renderList(); } else { alert(`${pkg} is already in the list.`); } };
     const removeApp = (pkg) => { authorizedApps = authorizedApps.filter(app => app !== pkg); renderList(); };
     const showStatus = (msg, isErr) => { statusMessage.textContent = msg; statusMessage.className = isErr ? 'status-message error' : 'status-message success'; setTimeout(() => statusMessage.textContent = '', 4000); };
+    
+    // --- GITHUB API FUNCTIONS ---
     const loadWhitelistFromGitHub = async () => { if (!githubUser || !githubRepo) return; showStatus('Loading whitelist...'); try { const res = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/whitelist.json`, { headers: { 'Authorization': `token ${githubToken}` } }); if (!res.ok) { if(res.status === 404) { showStatus('whitelist.json not found.', true); authorizedApps = []; fileSHA = null; } else { throw new Error(res.statusText); } } else { const data = await res.json(); fileSHA = data.sha; authorizedApps = JSON.parse(atob(data.content)); showStatus('Loaded successfully!'); } renderList(); } catch (err) { showStatus(err.message, true); } };
-    const saveWhitelistToGitHub = async () => { if (!githubUser || !githubRepo || !githubToken) { showStatus('Auth error.', true); return; } showStatus('Saving...'); const content = JSON.stringify(authorizedApps, null, 2); const body = { message: 'Updated whitelist', content: btoa(content), sha: fileSHA }; try { const res = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/whitelist.json`, { method: 'PUT', headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const data = await res.json(); if (!res.ok) throw new Error(data.message); fileSHA = data.content.sha; showStatus('Saved successfully!'); } catch (err) { showStatus(err.message, true); } };
-    const searchApps = async () => { const query = searchInput.value.trim(); if (query.length < 3) { searchResultsDiv.style.display = 'none'; return; } searchResultsDiv.innerHTML = 'Searching...'; searchResultsDiv.style.display = 'block'; const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${SEARCH_ENGINE_ID}&q=${encodeURIComponent(query)}`; try { const res = await fetch(url); const data = await res.json(); if (data.items && data.items.length > 0) { displayGoogleResults(data.items); } else { searchResultsDiv.innerHTML = 'No apps found.'; } } catch (err) { searchResultsDiv.innerHTML = 'Error.'; } };
+    const saveWhitelistToGitHub = async () => { if (!githubUser || !githubRepo || !githubToken) { showStatus('Auth error.', true); return; } showStatus('Saving...'); const content = JSON.stringify(authorizedApps, null, 2); const body = { message: 'Updated whitelist via online editor', content: btoa(content), sha: fileSHA }; try { const res = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/whitelist.json`, { method: 'PUT', headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const data = await res.json(); if (!res.ok) throw new Error(data.message); fileSHA = data.content.sha; showStatus('Saved successfully!'); } catch (err) { showStatus(err.message, true); } };
+    
+    // --- GOOGLE SEARCH API FUNCTIONS ---
+    const searchApps = async () => { const query = searchInput.value.trim(); if (query.length < 3) { searchResultsDiv.style.display = 'none'; return; } searchResultsDiv.innerHTML = '<div style="padding: 10px; text-align: center; color: #718096;">Searching...</div>'; searchResultsDiv.style.display = 'block'; const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${SEARCH_ENGINE_ID}&q=${encodeURIComponent(query)}`; try { const res = await fetch(url); const data = await res.json(); if (data.items && data.items.length > 0) { displayGoogleResults(data.items); } else { searchResultsDiv.innerHTML = '<div style="padding: 10px; text-align: center; color: #718096;">No apps found.</div>'; } } catch (err) { searchResultsDiv.innerHTML = 'Error fetching results.'; } };
     const displayGoogleResults = (results) => { searchResultsDiv.innerHTML = ''; results.forEach(app => { try { const url = new URL(app.link); const id = url.searchParams.get('id'); if (!id) return; const title = app.title.split('-')[0].trim(); const item = document.createElement('div'); item.className = 'search-result-item'; item.innerHTML = `<div class="app-info"><strong>${title}</strong><small>${id}</small></div><button>Add</button>`; item.querySelector('button').addEventListener('click', () => addApp(id)); searchResultsDiv.appendChild(item); } catch (e) {} }); };
     
     // --- AUTHENTICATION LOGIC ---
@@ -66,28 +70,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (codeFromRedirect) {
             loginContainer.innerHTML = '<h1>Authenticating... Please wait.</h1>';
             try {
-                // Step 1: Exchange code for a token
                 const tokenRes = await fetch(`/api/github-callback?code=${codeFromRedirect}`);
                 if (!tokenRes.ok) throw new Error('Failed to get token from server.');
                 const tokenData = await tokenRes.json();
                 const tempToken = tokenData.token;
                 if (!tempToken) throw new Error('Token was not returned.');
 
-                // Step 2: Use the token to find out who the user is
-                const userRes = await fetch('https://api.github.com/user', {
-                    headers: { 'Authorization': `token ${tempToken}` }
-                });
+                const userRes = await fetch('https://api.github.com/user', { headers: { 'Authorization': `token ${tempToken}` } });
                 if (!userRes.ok) throw new Error('Failed to get user profile from GitHub.');
                 const userData = await userRes.json();
                 
-                // Step 3: Check if the user is in our allowed list
                 if (ALLOWED_USERS.includes(userData.login)) {
-                    // Success! User is allowed.
                     localStorage.setItem('githubToken', tempToken);
-                    window.location.href = window.location.pathname; // Reload to clean state
+                    window.location.href = window.location.pathname;
                 } else {
-                    // User is not allowed. Show access denied screen.
-                    localStorage.clear(); // Clear any stored data
+                    localStorage.clear();
                     showAccessDenied();
                 }
             } catch (error) {
@@ -96,7 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.href = window.location.pathname;
             }
         } else {
-            // Normal page load, check localStorage
             githubToken = localStorage.getItem('githubToken');
             githubUser = localStorage.getItem('githubUser');
             githubRepo = localStorage.getItem('githubRepo');
