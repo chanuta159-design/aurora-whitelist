@@ -1,108 +1,46 @@
 /* General Body & Font Styling */
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #f4f7f9;
-    color: #333;
-    margin: 0;
-    padding: 20px 20px 350px 20px; 
-}
-
-.container {
-    width: 100%;
-    max-width: 800px;
-    margin: 0 auto;
-    box-sizing: border-box;
-}
-
-header {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f7f9; color: #333; margin: 0; padding: 20px 20px 250px 20px; }
+.container { width: 100%; max-width: 800px; margin: 0 auto; box-sizing: border-box; }
+header { text-align: center; margin-bottom: 30px; }
 h1 { color: #1a2533; margin-bottom: 5px; }
 h2 { color: #4a5568; padding-bottom: 10px; margin-top: 0; font-size: 1.25rem; }
-.step {
-    display: inline-block;
-    background-color: #007bff;
-    color: white;
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    line-height: 28px;
-    text-align: center;
-    font-weight: bold;
-    margin-right: 10px;
-}
+.step { display: inline-block; background-color: #007bff; color: white; border-radius: 50%; width: 28px; height: 28px; line-height: 28px; text-align: center; font-weight: bold; margin-right: 10px; }
 
-/* --- NEW DROPDOWN SEARCH STYLES --- */
+/* Login Container Styles */
+.login-container { max-width: 500px; margin: 100px auto; text-align: center; padding: 40px; background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+.login-form { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
+#loginButton { background-color: #24292e; }
+#loginButton:hover { background-color: #444; }
 
-.search-wrapper {
-    position: relative; /* This is the anchor for the dropdown */
-}
-
-.search-container {
-    display: flex;
-    /* We don't need a gap anymore */
-}
-
-input[type="text"] {
-    flex-grow: 1;
-    padding: 10px 15px;
-    border: 1px solid #cbd5e0;
-    border-radius: 6px;
-    font-size: 16px;
-}
-
-/* The dropdown results box */
-.results-container {
-    display: none; /* Hidden by default */
-    position: absolute; /* Lifts it out of the document flow */
-    top: 100%; /* Positions it right below the search bar */
-    left: 0;
-    right: 0;
-    background-color: #ffffff;
-    border: 1px solid #cbd5e0;
-    border-top: none;
-    border-radius: 0 0 6px 6px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    z-index: 1001; /* Ensure it's on top of other content */
-    max-height: 300px; /* Limit height and allow scrolling */
-    overflow-y: auto;
-}
-
-.search-result-item {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    padding: 10px;
-    cursor: pointer;
-}
-.search-result-item:hover {
-    background-color: #f0f4f8;
-}
-
+/* Dropdown Search Styles */
+.search-wrapper { position: relative; }
+.search-container { display: flex; }
+input[type="text"] { flex-grow: 1; padding: 10px 15px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 16px; }
+.results-container { display: none; position: absolute; top: 100%; left: 0; right: 0; background-color: #ffffff; border: 1px solid #cbd5e0; border-top: none; border-radius: 0 0 6px 6px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); z-index: 1001; max-height: 300px; overflow-y: auto; }
+.search-result-item { display: flex; align-items: center; gap: 15px; padding: 10px; cursor: pointer; }
+.search-result-item:hover { background-color: #f0f4f8; }
 .search-result-item .app-info { flex-grow: 1; }
 .search-result-item strong { display: block; color: #2d3748; }
 .search-result-item small { color: #718096; }
 .search-result-item button { background-color: #28a745; margin-left: auto; white-space: nowrap; }
-.search-result-item button:hover { background-color: #218838; }
 
-/* --- TRAY STYLES (Mostly unchanged) --- */
-
+/* Tray Styles */
 .tray-container { position: fixed; bottom: 0; left: 0; right: 0; background-color: #ffffff; box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1); border-top: 1px solid #e2e8f0; z-index: 1000; padding: 20px; }
-.tray-content { max-width: 1200px; margin: 0 auto; display: flex; gap: 30px; }
+.tray-content { max-width: 1200px; margin: 0 auto; display: flex; gap: 30px; align-items: flex-start; }
 .tray-section { flex: 1; }
-.current-list-container { display: flex; overflow-x: auto; padding: 10px 0; gap: 10px; height: 70px; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+.whitelist-section { flex-basis: 70%; }
+.github-section { flex-basis: 30%; display: flex; flex-direction: column; gap: 10px; }
+.current-list-container { display: flex; overflow-x: auto; padding: 10px 0; gap: 10px; height: 100px; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; align-content: flex-start; }
 .list-item { display: flex; align-items: center; background-color: #e9ecef; border-radius: 16px; padding: 5px 12px; gap: 8px; flex-shrink: 0; font-size: 14px; }
-.list-item .app-info { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list-item .app-info { white-space: nowrap; }
 .list-item button { background-color: #dc3545; color: white; border-radius: 50%; width: 22px; height: 22px; padding: 0; font-size: 12px; line-height: 22px; text-align: center; font-weight: bold; cursor: pointer; border: none; }
-.list-item button:hover { background-color: #c82333; }
 .list-item button::before { content: '×'; }
 .list-item button span { display: none; }
-.json-io-container { display: flex; gap: 20px; margin-top: 10px; }
-textarea { flex: 1; width: 100%; height: 50px; padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; font-family: monospace; font-size: 12px; resize: vertical; }
-.button-group { display: flex; gap: 15px; margin-top: 10px; }
-.empty-list-message { display: none; text-align: center; color: #718096; padding: 15px 0; height: 70px; box-sizing: border-box; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+#logoutButton { background-color: #6c757d; }
+.status-message { margin-top: 5px; font-size: 14px; text-align: center; min-height: 20px; }
+.status-message.success { color: #28a745; }
+.status-message.error { color: #dc3545; }
+.empty-list-message { display: none; text-align: center; color: #718096; padding: 15px 0; min-height: 100px; box-sizing: border-box; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
 .current-list-container:empty + .empty-list-message { display: block; }
 button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
 button:hover { background-color: #0056b3; }
