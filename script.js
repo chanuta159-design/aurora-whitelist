@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURATION ---
-    const ALLOWED_USERS = ['lilor159357']; // Add more usernames here if needed
-    const GITHUB_USER = 'lilor159357'; // Your GitHub username
+    const ALLOWED_USERS = ['chanuta159-design']; // Add more usernames here if needed
+    const GITHUB_USER = 'chanuta159-design'; // Your GitHub username
     const GITHUB_REPO = 'aurora-whitelist'; // The name of your repository
 
     // --- STATE MANAGEMENT ---
@@ -43,7 +43,7 @@ const decodeUnicode = (str) => {
     // --- GOOGLE API & GITHUB OAUTH CREDENTIALS ---
     const GOOGLE_API_KEY = 'AIzaSyD3YjTEIwAnBBIV7LzuRcQVHmTTB27og9o';
     const SEARCH_ENGINE_ID = 'b769d79cff32c40de';
-    const GITHUB_CLIENT_ID = 'Ov23li1YXH2AXhWQAgER';
+    const GITHUB_CLIENT_ID = 'Ov23ligwsbAgnDvz3yp0';
 
     // --- UI LOGIC ---
     const showEditor = () => { loginContainer.style.display = 'none'; accessDeniedContainer.style.display = 'none'; appContainer.style.display = 'block'; repoNameSpan.textContent = `${githubUser}/${githubRepo}`; loadWhitelistFromGitHub(); };
