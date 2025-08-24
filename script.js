@@ -92,7 +92,7 @@ const removeApp = (pkg) => {
     // MODIFICATION: After loading the whitelist, it now fetches the app names.
     const loadWhitelistFromGitHub = async () => {
     if (!githubUser || !githubRepo) return;
-    showStatus('Loading whitelist...');
+    showStatus('טוען רשימה לבנה...');
 
     const packageUrl = `https://api.github.com/repos/${githubUser}/${githubRepo}/contents/whitelist.json`;
     const namesUrl = `https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-names.json`;
@@ -128,12 +128,12 @@ const removeApp = (pkg) => {
 
         // Important: Ensure lists are synchronized
         if (authorizedApps.length !== appNames.length) {
-            showStatus('Warning: Whitelist files are out of sync! Please check your repo.', true);
+            showStatus('אזהרה: הרשימה הלבנה אינה מסונכרת עם רשימת השמות , אנא בדוק את המאגר שלך (ריפו).', true);
             // As a fallback, we can create placeholder names
             appNames = authorizedApps.map(pkg => pkg); 
         }
 
-        showStatus('Loaded successfully!');
+        showStatus('נטען בהצלחה!');
         renderList();
 
     } catch (err) {
@@ -146,7 +146,7 @@ const saveWhitelistToGitHub = async () => {
         showStatus('Authentication error.', true);
         return;
     }
-    showStatus('Saving...');
+    showStatus('שומר...');
 
     try {
         // --- Save whitelist.json ---
@@ -181,7 +181,7 @@ const saveWhitelistToGitHub = async () => {
         if (!namesRes.ok) throw new Error(`Failed to save app-names.json: ${namesData.message}`);
         namesFileSHA = namesData.content.sha; // Update the SHA
 
-        showStatus('Saved successfully!');
+        showStatus('נשמר בהצלחה!');
     } catch (err) {
         showStatus(err.message, true);
     }
