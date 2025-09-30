@@ -44,5 +44,6 @@
   "com.google.android.apps.messaging",
   "com.google.android.gm",
   "com.khl.kiosk",
-  "com.harman.ble.jbllink"
+  "com.harman.ble.jbllink",
+  "pl.netigen.toolstuner"
 ]
