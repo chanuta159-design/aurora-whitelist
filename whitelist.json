@@ -45,5 +45,8 @@
   "com.google.android.gm",
   "com.khl.kiosk",
   "com.harman.ble.jbllink",
-  "pl.netigen.toolstuner"
+  "pl.netigen.toolstuner",
+  "com.soundcorset.client.android",
+  "com.joytunes.simplyguitar.tuner",
+  "com.ovelin.guitartuna"
 ]
