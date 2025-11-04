@@ -48,5 +48,7 @@
   "com.soundcorset.client.android",
   "com.bork.dsp.datuna",
   "com.ideomobile.leumicard",
-  "com.google.android.apps.docs.editors.sheets"
+  "com.google.android.apps.docs.editors.sheets",
+  "com.google.android.apps.kids.familylink",
+  "com.google.android.apps.kids.familylinkhelper"
 ]
