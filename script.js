@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const GITHUB_USER = 'chanuta159-design'; // Your GitHub username
     const GITHUB_REPO = 'aurora-whitelist'; // The name of your repository
 
+    
     // --- STATE MANAGEMENT ---
     // MODIFICATION: Added packageNameMap to cache app names
     let authorizedApps = [], appNames = [], debounceTimer, fileSHA, namesFileSHA, githubToken = null, githubUser = '', githubRepo = ''; // The packageNameMap is no longer needed, as appNames replaces it.
