@@ -6,27 +6,32 @@ export default async function handler(request, response) {
     const { authorizedApps, appNames, githubToken, githubUser, githubRepo } = request.body;
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
+    if (!GEMINI_API_KEY) {
+        console.error('Missing GEMINI_API_KEY in environment variables');
+        return response.status(500).json({ error: 'GEMINI_API_KEY is missing from Vercel settings' });
+    }
+
     if (!githubToken || !authorizedApps || !appNames) {
         return response.status(400).json({ error: 'Missing parameters' });
     }
 
     try {
-        // 1. נרכיב רשימה של אפליקציות עם שמות ומזהים עבור ה-AI
+        // 1. נרכיב רשימה של אפליקציות עבור ה-AI
         const appsListForPrompt = authorizedApps.map((pkg, idx) => {
             return `Name: "${appNames[idx] || pkg}", Package: "${pkg}"`;
         }).join('\n');
 
-        // 2. פנייה למודל של Gemini לחלוקה לקטגוריות
+        // 2. פנייה למודל של Gemini
         const prompt = `
 אתה מומחה לקטלוג אפליקציות לאנדרואיד עבור קהל ישראלי וחרדי.
 לפניך רשימת אפליקציות:
 ${appsListForPrompt}
 
 המשימה שלך:
-חלק את כל האפליקציות לקטגוריות הגיוניות בעברית (למשל: "תחבורה וניווט", "פיננסים ובנקאות", "יהדות ותפילה", "פרודוקטיביות וכלים", "בריאות וקופות חולים", "תקשורת והודעות" וכו').
-אתה רשאי ליצור קטגוריות חדשות במידת הצורך. ודא שכל אפליקציה מופיעה בדיוק בקטגוריה אחת המתאימה ביותר.
+חלק את כל האפליקציות לקטגוריות הגיוניות בעברית (למשל: "תחבורה וניווט", "פיננסים ובנקאות", "יהדות ותפילה", "פרודוקטיביות וכלים", "בריאות וקופות חולים", "תקשורת והודעות", "שונות" וכו').
+ודא שכל אפליקציה מופיעה בדיוק בקטגוריה אחת המתאימה ביותר.
 
-עליך להחזיר אך ורק אובייקט JSON תקין (בלי תגיות Markdown מסביב), במבנה הבא:
+עליך להחזיר אך ורק אובייקט JSON תקין (בלי Markdown מסביב), במבנה הבא:
 {
   "שם קטגוריה 1": ["package.name.1", "package.name.2"],
   "שם קטגוריה 2": ["package.name.3"]
@@ -35,7 +40,10 @@ ${appsListForPrompt}
 
         const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'x-goog-api-key': GEMINI_API_KEY
+            },
             body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: { responseMimeType: "application/json" }
@@ -43,10 +51,16 @@ ${appsListForPrompt}
         });
 
         const geminiData = await geminiResponse.json();
+
+        if (!geminiResponse.ok || geminiData.error) {
+            console.error('Gemini API Error details:', JSON.stringify(geminiData, null, 2));
+            throw new Error(`Gemini Error: ${geminiData.error?.message || 'Failed to call Gemini'}`);
+        }
+
         const rawJsonText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
-        
         if (!rawJsonText) {
-            throw new Error('Gemini failed to generate categories');
+            console.error('Gemini returned empty text:', JSON.stringify(geminiData, null, 2));
+            throw new Error('Gemini failed to generate categories: empty response');
         }
 
         const categorizedJson = JSON.parse(rawJsonText);
@@ -54,7 +68,6 @@ ${appsListForPrompt}
         // 3. שמירת הקובץ המקוטלג ב-GitHub (categorized-whitelist.json)
         const fileUrl = `https://api.github.com/repos/${githubUser}/${githubRepo}/contents/categorized-whitelist.json`;
         
-        // נבדוק אם הקובץ כבר קיים כדי לקבל את ה-SHA שלו (לצורך עדכון)
         let currentSha = null;
         const checkRes = await fetch(fileUrl, {
             headers: { 'Authorization': `token ${githubToken}` }
@@ -64,7 +77,6 @@ ${appsListForPrompt}
             currentSha = checkData.sha;
         }
 
-        // המרה ל-Base64 ותמיכה ביוניקוד
         const contentBase64 = Buffer.from(JSON.stringify(categorizedJson, null, 2)).toString('base64');
 
         const putRes = await fetch(fileUrl, {
