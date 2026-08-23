@@ -16,22 +16,26 @@ export default async function handler(request, response) {
     }
 
     try {
-        // --- 1. מציאת המודל העדכני ביותר אוטומטית ---
-        let latestModel = 'gemini-1.5-flash'; // ברירת מחדל לביטחון
+        // --- 1. מציאת המודל העדכני ביותר אוטומטית (מתעלם מ-omni ו-exp) ---
+        let latestModel = 'gemini-2.5-flash'; // Fallback בטוח למקרה הצורך
         try {
             const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`);
             const modelsData = await modelsRes.json();
             
             if (modelsData.models) {
-                const flashModels = modelsData.models.filter(m => 
-                    m.name.includes('gemini') && 
-                    m.name.includes('flash') && 
-                    m.supportedGenerationMethods.includes('generateContent')
-                );
+                const flashModels = modelsData.models.filter(m => {
+                    const name = m.name.toLowerCase();
+                    return name.includes('flash') && 
+                           !name.includes('omni') &&       // מסנן את הדגמים החסומים
+                           !name.includes('experimental') &&
+                           !name.includes('exp') &&
+                           m.supportedGenerationMethods &&
+                           m.supportedGenerationMethods.includes('generateContent');
+                });
                 
                 if (flashModels.length > 0) {
-                    // מיון אלפביתי מבטיח שגרסה גבוהה יותר (3.7) תהיה אחרונה
-                    flashModels.sort((a, b) => a.name.localeCompare(b.name));
+                    // מוצא את המודל עם מספר הגרסה הגבוה ביותר
+                    flashModels.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
                     latestModel = flashModels[flashModels.length - 1].name.replace('models/', '');
                 }
             }
@@ -39,8 +43,7 @@ export default async function handler(request, response) {
             console.warn('Failed to dynamically fetch models, using fallback', e);
         }
 
-        console.log(`[AI] Selected model for categorization: ${latestModel}`);
-
+        console.log(`[AI] Selected model: ${latestModel}`);
 
         // --- 2. הכנת הנתונים ל-AI ---
         const appsListForPrompt = authorizedApps.map((pkg, idx) => {
