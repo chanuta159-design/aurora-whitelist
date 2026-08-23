@@ -16,12 +16,37 @@ export default async function handler(request, response) {
     }
 
     try {
-        // 1. נרכיב רשימה של אפליקציות עבור ה-AI
+        // --- 1. מציאת המודל העדכני ביותר אוטומטית ---
+        let latestModel = 'gemini-1.5-flash'; // ברירת מחדל לביטחון
+        try {
+            const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`);
+            const modelsData = await modelsRes.json();
+            
+            if (modelsData.models) {
+                const flashModels = modelsData.models.filter(m => 
+                    m.name.includes('gemini') && 
+                    m.name.includes('flash') && 
+                    m.supportedGenerationMethods.includes('generateContent')
+                );
+                
+                if (flashModels.length > 0) {
+                    // מיון אלפביתי מבטיח שגרסה גבוהה יותר (3.7) תהיה אחרונה
+                    flashModels.sort((a, b) => a.name.localeCompare(b.name));
+                    latestModel = flashModels[flashModels.length - 1].name.replace('models/', '');
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to dynamically fetch models, using fallback', e);
+        }
+
+        console.log(`[AI] Selected model for categorization: ${latestModel}`);
+
+
+        // --- 2. הכנת הנתונים ל-AI ---
         const appsListForPrompt = authorizedApps.map((pkg, idx) => {
             return `Name: "${appNames[idx] || pkg}", Package: "${pkg}"`;
         }).join('\n');
 
-        // 2. פנייה למודל של Gemini
         const prompt = `
 אתה מומחה לקטלוג אפליקציות לאנדרואיד עבור קהל ישראלי וחרדי.
 לפניך רשימת אפליקציות:
@@ -31,14 +56,15 @@ ${appsListForPrompt}
 חלק את כל האפליקציות לקטגוריות הגיוניות בעברית (למשל: "תחבורה וניווט", "פיננסים ובנקאות", "יהדות ותפילה", "פרודוקטיביות וכלים", "בריאות וקופות חולים", "תקשורת והודעות", "שונות" וכו').
 ודא שכל אפליקציה מופיעה בדיוק בקטגוריה אחת המתאימה ביותר.
 
-עליך להחזיר אך ורק אובייקט JSON תקין (בלי Markdown מסביב), במבנה הבא:
+עליך להחזיר אך ורק אובייקט JSON תקין (בלי תגיות Markdown מסביב), במבנה הבא:
 {
   "שם קטגוריה 1": ["package.name.1", "package.name.2"],
   "שם קטגוריה 2": ["package.name.3"]
 }
 `;
 
-        const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        // --- 3. פנייה למודל הנבחר ---
+        const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${latestModel}:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -59,13 +85,13 @@ ${appsListForPrompt}
 
         const rawJsonText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!rawJsonText) {
-            console.error('Gemini returned empty text:', JSON.stringify(geminiData, null, 2));
             throw new Error('Gemini failed to generate categories: empty response');
         }
 
         const categorizedJson = JSON.parse(rawJsonText);
 
-        // 3. שמירת הקובץ המקוטלג ב-GitHub (categorized-whitelist.json)
+
+        // --- 4. שמירת הקובץ המקוטלג ב-GitHub ---
         const fileUrl = `https://api.github.com/repos/${githubUser}/${githubRepo}/contents/categorized-whitelist.json`;
         
         let currentSha = null;
@@ -86,7 +112,7 @@ ${appsListForPrompt}
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                message: 'Update categorized whitelist via Gemini AI',
+                message: `Update categorized whitelist via ${latestModel}`,
                 content: contentBase64,
                 sha: currentSha || undefined
             })
