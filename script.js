@@ -147,10 +147,10 @@ const saveWhitelistToGitHub = async () => {
         showStatus('Authentication error.', true);
         return;
     }
-    showStatus('שומר...');
+    showStatus('ה-AI מקטלג את האפליקציות ושומר ל-GitHub (עשוי לקחת כמה שניות)...');
 
     try {
-        // --- Save whitelist.json ---
+        // --- 1. שמירת whitelist.json הרגיל ---
         const packageContent = JSON.stringify(authorizedApps, null, 2);
         const packageBody = {
             message: 'Updated whitelist packages via online editor',
@@ -163,10 +163,9 @@ const saveWhitelistToGitHub = async () => {
             body: JSON.stringify(packageBody)
         });
         const packageData = await packageRes.json();
-        if (!packageRes.ok) throw new Error(`Failed to save whitelist.json: ${packageData.message}`);
-        fileSHA = packageData.content.sha; // Update the SHA
+        if (packageRes.ok) fileSHA = packageData.content.sha;
 
-        // --- Save app-names.json ---
+        // --- 2. שמירת app-names.json הרגיל ---
         const namesContent = JSON.stringify(appNames, null, 2);
         const namesBody = {
             message: 'Updated whitelist names via online editor',
@@ -179,10 +178,25 @@ const saveWhitelistToGitHub = async () => {
             body: JSON.stringify(namesBody)
         });
         const namesData = await namesRes.json();
-        if (!namesRes.ok) throw new Error(`Failed to save app-names.json: ${namesData.message}`);
-        namesFileSHA = namesData.content.sha; // Update the SHA
+        if (namesRes.ok) namesFileSHA = namesData.content.sha;
 
-        showStatus('נשמר בהצלחה!');
+        // --- 3. הפעלת ה-AI ושמירת categorized-whitelist.json המקוטלג ---
+        const catRes = await fetch('/api/categorize-and-save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                authorizedApps,
+                appNames,
+                githubToken,
+                githubUser,
+                githubRepo
+            })
+        });
+
+        const catData = await catRes.json();
+        if (!catRes.ok) throw new Error(catData.error || 'Failed to categorize');
+
+        showStatus('האפליקציות קוטלגו ונשמרו בהצלחה!');
     } catch (err) {
         showStatus(err.message, true);
     }
