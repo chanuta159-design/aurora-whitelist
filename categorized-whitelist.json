@@ -12,7 +12,8 @@
     "com.nedarim.nedarimplus",
     "com.minyan",
     "com.dandodev.TfilaFinder",
-    "fm.jewishmusic.application"
+    "fm.jewishmusic.application",
+    "com.MizrahiTefahot.nh"
   ],
   "תחבורה, רכב וניווט": [
     "com.waze",
@@ -25,10 +26,9 @@
     "com.gettaxi.android",
     "com.citycar.flutter",
     "com.positive_apps.buzz_car.prod",
-    "il.idf.zuzu",
-    "com.shift.idf",
     "il.co.inmanage.ten",
-    "com.neusoft.qdrivelink"
+    "com.neusoft.qdrivelink",
+    "il.idf.zuzu"
   ],
   "פיננסים, בנקים ותשלומים": [
     "com.bnhp.payments.paymentsapp",
@@ -65,9 +65,7 @@
     "com.microsoft.office.excel",
     "com.adobe.reader",
     "com.google.android.keep",
-    "com.google.android.apps.tasks",
-    "il.idf.doch1",
-    "com.idf.mitgaisim"
+    "com.google.android.apps.tasks"
   ],
   "כלי מערכת, ניהול ואבטחה": [
     "com.alphainventor.filemanager",
@@ -96,5 +94,10 @@
     "com.google.android.apps.photos",
     "com.adsk.sketchbook",
     "com.swiich.rlw"
+  ],
+  "צבא": [
+    "il.idf.doch1",
+    "com.shift.idf",
+    "com.idf.mitgaisim"
   ]
 }
