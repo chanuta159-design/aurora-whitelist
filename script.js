@@ -158,10 +158,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     animation: 200,
                     ghostClass: 'sortable-ghost',
                     easing: "cubic-bezier(0.25, 1, 0.5, 1)",
+                    scroll: true,             // הפעלת גלילה אוטומטית
+                    scrollSensitivity: 80,    // כמה פיקסלים מהקצה להתחיל לגלול
+                    scrollSpeed: 20,          // מהירות הגלילה המקסימלית
+                    bubbleScroll: true,       // מאפשר גלילה של כל חלון הדפדפן
+                    forceFallback: true,      // פותר באגים של גלילה בדפדפנים מודרניים
+                    fallbackClass: 'sortable-fallback', // קלאס עיצובי לזמן גרירה
                     onEnd: syncStateFromBoard
                 });
             }
-        }
     };
 
     const syncStateFromBoard = () => {
