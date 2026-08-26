@@ -1,0 +1,120 @@
+{
+  "חינוך": [
+    "com.khl.kiosk",
+    "com.kosharot.simulator",
+    "androidYeshiva.apps.yeshiva.yeshivawebsite",
+    "com.khl.www2"
+  ],
+  "מוזיקה ואודיו": [
+    "fm.jewishmusic.application",
+    "com.bork.dsp.datuna",
+    "com.soundcorset.client.android"
+  ],
+  "מפות וניווט": [
+    "com.shift.idf",
+    "com.minyan",
+    "com.tranzmate",
+    "il.idf.zuzu",
+    "com.waze",
+    "com.dandodev.TfilaFinder",
+    "com.egged.egg",
+    "co.hopon.client",
+    "com.unicell.pangoandroid",
+    "com.gettaxi.android"
+  ],
+  "כלים": [
+    "com.jingyuan.lamp",
+    "com.niki.filemanagerplus",
+    "com.emanuelef.remote_capture",
+    "com.alert.meserhadash",
+    "קום.fileplusss.mage",
+    "com.osapps.airremote",
+    "moe.shizuku.privileged.api",
+    "com.cheetahcx.app",
+    "com.nothing.smartcenter",
+    "com.mtv.sai",
+    "com.google.android.apps.adm",
+    "com.google.android.apps.kids.familylinkhelper",
+    "com.google.android.apps.kids.familylink"
+  ],
+  "ספרים ועיון": [
+    "org.sefaria.sefaria",
+    "il.co.tikkunhaklali",
+    "קום.siddurim.klilat_yofi.ashkenaz",
+    "com.tehilim.book",
+    "tfilon.tfilon",
+    "il.co.hamichlol"
+  ],
+  "פיננסיים": [
+    "com.ideomobile.discount",
+    "com.nedarim.nedarimplus",
+    "il.co.yahav.mobbanking",
+    "com.libra.chik",
+    "com.leumi.leumiwallet",
+    "com.payboxapp",
+    "קום.bnhp.payments.paymentsapp",
+    "com.ideomobile.leumicard",
+    "קום.fibi.nativeapp",
+    "קום.pepper.ldb",
+    "קום.MizrahiTefahot.nh"
+  ],
+  "קניות": [
+    "קום.swiich.rlw"
+  ],
+  "נסיעות והסביבה הקרובה": [
+    "קום.positive_apps.buzz_car.prod",
+    "קום.citycar.flutter",
+    "com.google.android.apps.maps",
+    "קום.moblin.israeltrain"
+  ],
+  "החיים הטובים": [
+    "קום.tuya.smart",
+    "קום.tuya.smartlife",
+    "il.co.inmanage.ten"
+  ],
+  "בריאות וכושר": [
+    "קום.strava",
+    "קום.connect_computer.boostnew"
+  ],
+  "לשיפור הפרודוקטיביות": [
+    "קום.google.android.apps.tasks",
+    "il.idf.doch1",
+    "com.microsoft.office.word",
+    "com.google.android.apps.docs.editors.sheets",
+    "com.google.android.keep",
+    "com.microsoft.office.excel",
+    "com.idf.mitgaisim",
+    "com.alphainventor.filemanager",
+    "com.google.android.apps.docs.editors.docs",
+    "קום.google.android.apps.docs",
+    "com.adobe.reader"
+  ],
+  "תקשורת": [
+    "mitmachim.top",
+    "com.whatsapp",
+    "com.google.android.contacts",
+    "com.google.android.apps.messaging",
+    "קום.google.android.gm"
+  ],
+  "בידור": [
+    "com.harman.ble.jbllink"
+  ],
+  "רפואה": [
+    "com.ideomobile.maccabi",
+    "org.meuhedet.android",
+    "clalit.android",
+    "leumit.mobile"
+  ],
+  "אמנות ועיצוב": [
+    "com.adsk.sketchbook"
+  ],
+  "צילום": [
+    "com.google.android.apps.photos"
+  ],
+  "עסקים": [
+    "us.zoom.videomeetings"
+  ],
+  "כלי רכב": [
+    "com.neusoft.qdrivelink"
+  ]
+}
