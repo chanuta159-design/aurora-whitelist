@@ -1,126 +1,203 @@
-/* General Body & Font Styling */
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f7f9; color: #333; margin: 0; padding: 20px 20px 250px 20px; }
-.container { width: 100%; max-width: 900px; margin: 0 auto; box-sizing: border-box; }
-header { text-align: center; margin-bottom: 30px; }
-h1 { color: #1a2533; margin-bottom: 5px; }
-h2 { color: #4a5568; padding-bottom: 10px; margin-top: 0; font-size: 1.25rem; }
-.step { display: inline-block; background-color: #007bff; color: white; border-radius: 50%; width: 28px; height: 28px; line-height: 28px; text-align: center; font-weight: bold; margin-left: 10px; }
+/* --- עיצוב מודרני מבוסס מערכת עיצוב (Design System) --- */
+:root {
+    --bg-color: #f3f6f8;
+    --surface-color: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border-color: #e2e8f0;
+    
+    --primary-color: #4f46e5;
+    --primary-hover: #4338ca;
+    --danger-color: #ef4444;
+    --danger-hover: #dc2626;
+    --success-color: #10b981;
+    
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-pill: 9999px;
+    
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+    --shadow-lg: 0 10px 25px -3px rgba(0,0,0,0.08);
+}
 
-/* Login Container Styles */
-.login-container { max-width: 500px; margin: 100px auto; text-align: center; padding: 40px; background: #fff; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-.login-form { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
-#loginButton { background-color: #24292e; }
-#loginButton:hover { background-color: #444; }
+/* --- הגדרות כלליות --- */
+body { 
+    font-family: 'Assistant', -apple-system, BlinkMacSystemFont, sans-serif; 
+    background-color: var(--bg-color); 
+    color: var(--text-primary); 
+    margin: 0; 
+    padding: 30px 20px 120px 20px; /* פחות שטח מבוזבז למטה לעומת קודם */
+    line-height: 1.5;
+}
 
-/* Dropdown Search Styles */
-.search-wrapper { position: relative; }
-.search-container { display: flex; }
-input[type="text"] { flex-grow: 1; padding: 10px 15px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 16px; }
-.results-container { display: none; position: absolute; top: 100%; left: 0; right: 0; background-color: #ffffff; border: 1px solid #cbd5e0; border-top: none; border-radius: 0 0 6px 6px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); z-index: 1001; max-height: 300px; overflow-y: auto; }
-.search-result-item { display: flex; align-items: center; gap: 15px; padding: 10px; cursor: pointer; }
-.search-result-item:hover { background-color: #f0f4f8; }
-.search-result-item .app-info { flex-grow: 1; }
-.search-result-item strong { display: block; color: #2d3748; }
-.search-result-item small { color: #718096; }
-.search-result-item button { background-color: #28a745; margin-left: auto; white-space: nowrap; }
+.container { max-width: 1100px; margin: 0 auto; }
+h1, h2, h3 { color: var(--text-primary); margin: 0; }
+h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; }
 
-/* Categories Grid & Drag-and-Drop Board */
+/* --- Utility Classes (לוגיקה ואנימציות) --- */
+.hidden { display: none !important; }
+.fade-in { animation: fadeIn 0.4s ease-out forwards; }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- כפתורים --- */
+.btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 10px 20px; font-size: 15px; font-weight: 600; font-family: inherit;
+    border: none; border-radius: var(--radius-md); cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-primary { background-color: var(--primary-color); color: white; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2); }
+.btn-primary:hover { background-color: var(--primary-hover); transform: translateY(-1px); }
+.btn-secondary { background-color: var(--border-color); color: var(--text-primary); }
+.btn-secondary:hover { background-color: #cbd5e1; }
+.btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-primary); }
+.btn-outline:hover { background-color: var(--bg-color); border-color: #cbd5e1; }
+.btn-github { background-color: #24292e; color: white; padding: 12px 24px; font-size: 16px; width: 100%; margin-top: 15px; }
+.btn-github:hover { background-color: #1b1f23; }
+
+/* --- מסכי התחברות (Auth) --- */
+.auth-container { display: flex; align-items: center; justify-content: center; min-height: 80vh; }
+.auth-card { 
+    background: var(--surface-color); padding: 40px; border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg); max-width: 420px; text-align: center; width: 100%;
+}
+.auth-icon { font-size: 48px; margin-bottom: 20px; }
+.auth-card p { color: var(--text-secondary); margin-bottom: 25px; }
+.denied-actions { display: flex; flex-direction: column; gap: 12px; }
+.github-logout-link { display: inline-block; color: var(--text-secondary); text-decoration: underline; font-size: 14px; margin-top: 10px; }
+.small-text { font-size: 12px; color: #94a3b8; margin-top: 25px; }
+
+/* --- אזור הניהול --- */
+.main-header { margin-bottom: 40px; text-align: right; }
+.main-header p { color: var(--text-secondary); margin-top: 5px; font-size: 1.1rem; }
+.section-header { display: flex; justify-content: space-between; align-items: center; }
+.section-subtitle { color: var(--text-secondary); margin-top: 5px; margin-bottom: 20px; font-size: 15px; }
+
+/* חיפוש מגוגל פליי */
+.search-section { background: var(--surface-color); padding: 25px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); margin-bottom: 35px; border: 1px solid var(--border-color); }
+.search-wrapper { position: relative; margin-top: 15px; }
+.search-container { display: flex; align-items: center; position: relative; }
+.search-icon { position: absolute; right: 15px; color: var(--text-secondary); pointer-events: none; }
+input[type="text"] {
+    width: 100%; padding: 14px 45px 14px 15px; border: 1px solid var(--border-color);
+    border-radius: var(--radius-md); font-size: 16px; font-family: inherit;
+    transition: all 0.2s; background: var(--bg-color); color: var(--text-primary);
+    box-sizing: border-box;
+}
+input[type="text"]:focus { outline: none; border-color: var(--primary-color); background: var(--surface-color); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+
+/* תוצאות חיפוש */
+.results-container { 
+    position: absolute; top: 100%; left: 0; right: 0; margin-top: 8px;
+    background: var(--surface-color); border: 1px solid var(--border-color); 
+    border-radius: var(--radius-md); box-shadow: var(--shadow-md); z-index: 1000;
+    max-height: 350px; overflow-y: auto; display: none;
+}
+.search-result-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-bottom: 1px solid var(--border-color); }
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:hover { background-color: var(--bg-color); }
+.search-result-item .app-info { display: flex; flex-direction: column; }
+.search-result-item strong { color: var(--text-primary); font-size: 15px; }
+.search-result-item small { color: var(--text-secondary); font-size: 13px; font-family: monospace; }
+.search-result-item button { 
+    background-color: var(--success-color); color: white; border: none; padding: 6px 12px;
+    border-radius: var(--radius-md); font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.search-result-item button:hover { background-color: #059669; }
+
+/* ספינר טעינה */
+.spinner {
+    position: absolute; left: 15px; width: 20px; height: 20px;
+    border: 2px solid var(--border-color); border-top-color: var(--primary-color);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* --- לוח קטגוריות Kanban --- */
 .categories-board-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 16px;
-    margin-top: 10px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px; align-items: start;
 }
 .category-column {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    background: var(--surface-color); border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg); padding: 16px;
+    display: flex; flex-direction: column; box-shadow: var(--shadow-sm);
+    transition: transform 0.2s;
 }
+.category-column:hover { box-shadow: var(--shadow-md); }
 .category-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #edf2f7;
-    padding-bottom: 6px;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 15px;
 }
 .category-title {
-    font-weight: bold;
-    color: #2d3748;
-    font-size: 14px;
-    cursor: text;
-    border-radius: 4px;
-    padding: 2px 4px;
+    font-weight: 700; color: var(--text-primary); font-size: 16px;
+    padding: 4px 8px; border-radius: 6px; cursor: text; outline: none; margin-right: -8px;
+    transition: background 0.2s; border: 1px solid transparent;
 }
-.category-title:focus {
-    background: #edf2f7;
-    outline: none;
-}
+.category-title:focus { background: var(--bg-color); border-color: var(--primary-color); }
+
+/* כפתור מחיקת קטגוריה - מעודן יותר כפי שביקשת */
 .delete-cat-btn {
-    background: none;
-    border: none;
-    color: #a0aec0;
-    cursor: pointer;
-    font-size: 14px;
-    padding: 2px 6px;
+    background: none; border: none; color: #cbd5e1; cursor: pointer; padding: 4px;
+    border-radius: 4px; display: flex; align-items: center; transition: all 0.2s;
 }
-.delete-cat-btn:hover { color: #e53e3e; }
+.delete-cat-btn:hover { background-color: #fef2f2; color: var(--danger-color); }
 
-.apps-dropzone {
-    min-height: 50px;
-    background: #f7fafc;
-    border: 1px dashed #cbd5e0;
-    border-radius: 6px;
-    padding: 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
+.apps-dropzone { min-height: 80px; display: flex; flex-direction: column; gap: 10px; }
+
+/* קלף אפליקציה מודרני */
 .app-draggable-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    padding: 6px 10px;
-    font-size: 13px;
-    cursor: grab;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--bg-color); border: 1px solid transparent;
+    border-radius: var(--radius-md); padding: 10px 12px;
+    cursor: grab; transition: all 0.2s; position: relative;
 }
-.app-draggable-item:active { cursor: grabbing; }
-.app-draggable-item .app-info { display: flex; flex-direction: column; }
-.app-draggable-item strong { color: #2d3748; font-size: 13px; }
-.app-draggable-item small { color: #718096; font-size: 11px; }
-.app-draggable-item button { background-color: #dc3545; color: white; border-radius: 50%; width: 18px; height: 18px; padding: 0; font-size: 10px; line-height: 18px; text-align: center; font-weight: bold; cursor: pointer; border: none; flex-shrink: 0; margin-right: 6px; }
-.app-draggable-item button::before { content: '×'; }
-.sortable-ghost { opacity: 0.35; background: #ebf8ff !important; border: 1px dashed #3182ce; }
+.app-draggable-item:hover { border-color: var(--border-color); background: var(--surface-color); box-shadow: var(--shadow-sm); }
+.app-draggable-item:active { cursor: grabbing; border-color: var(--primary-color); }
+.app-draggable-item .app-info { display: flex; flex-direction: column; overflow: hidden; }
+.app-draggable-item strong { color: var(--text-primary); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app-draggable-item small { color: var(--text-secondary); font-size: 12px; font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* Tray Styles */
-.tray-container { position: fixed; bottom: 0; left: 0; right: 0; background-color: #ffffff; box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1); border-top: 1px solid #e2e8f0; z-index: 1000; padding: 20px; }
-.tray-content { max-width: 1200px; margin: 0 auto; display: flex; gap: 30px; align-items: flex-start; }
-.tray-section { flex: 1; }
-.whitelist-section { flex-basis: 70%; }
-.github-section { flex-basis: 30%; display: flex; flex-direction: column; gap: 10px; }
-.current-list-container { display: flex; overflow-x: auto; padding: 10px 0; gap: 10px; height: 100px; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; align-content: flex-start; }
-.list-item { display: flex; align-items: center; background-color: #e9ecef; border-radius: 16px; padding: 5px 12px; gap: 8px; flex-shrink: 0; font-size: 14px; }
-.list-item .app-info { white-space: nowrap; }
-.list-item button { background-color: #dc3545; color: white; border-radius: 50%; width: 22px; height: 22px; padding: 0; font-size: 12px; line-height: 22px; text-align: center; font-weight: bold; cursor: pointer; border: none; }
-.list-item button::before { content: '×'; }
-.list-item button span { display: none; }
-#logoutButton { background-color: #6c757d; }
-.status-message { margin-top: 5px; font-size: 14px; text-align: center; min-height: 20px; }
-.status-message.success { color: #28a745; }
-.status-message.error { color: #dc3545; }
-.empty-list-message { display: none; text-align: center; color: #718096; padding: 15px 0; min-height: 100px; box-sizing: border-box; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
-.current-list-container:empty + .empty-list-message { display: block; }
-button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
-button:hover { background-color: #0056b3; }
-.denied-actions { margin-top: 25px; display: flex; justify-content: center; gap: 15px; }
-.github-logout-link { display: inline-block; padding: 10px 20px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: 600; }
-.github-logout-link:hover { background-color: #5a6268; }
-.small-text { margin-top: 20px; font-size: 12px; color: #6c757d; }
+/* כפתור מחיקת אפליקציה */
+.app-draggable-item .remove-app-btn {
+    background: transparent; color: #94a3b8; border: none; padding: 4px;
+    border-radius: 6px; cursor: pointer; display: flex; align-items: center; transition: 0.2s;
+    flex-shrink: 0; margin-right: 8px;
+}
+.app-draggable-item:hover .remove-app-btn { color: var(--text-secondary); }
+.app-draggable-item .remove-app-btn:hover { background: #fef2f2; color: var(--danger-color); }
+
+.sortable-ghost { opacity: 0.4; background: #eef2ff !important; border: 1px dashed var(--primary-color); }
+
+/* --- Action Bar (התחליף המודרני ל-Tray התחתון) --- */
+.action-bar-container {
+    position: fixed; bottom: 30px; left: 0; right: 0;
+    display: flex; justify-content: center; pointer-events: none; z-index: 1000; padding: 0 20px;
+}
+.action-bar {
+    background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); pointer-events: auto;
+    border: 1px solid var(--border-color); border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-lg); padding: 12px 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 40px;
+    width: 100%; max-width: 800px;
+}
+.action-bar-info { display: flex; align-items: center; gap: 15px; }
+.repo-badge { display: flex; align-items: center; gap: 6px; font-family: monospace; background: var(--bg-color); padding: 6px 12px; border-radius: var(--radius-pill); font-size: 14px; color: var(--text-secondary); border: 1px solid var(--border-color); }
+.action-bar-actions { display: flex; align-items: center; gap: 10px; }
+
+.status-message { font-size: 14px; font-weight: 600; transition: opacity 0.3s; opacity: 0; white-space: nowrap; }
+.status-message.show { opacity: 1; }
+.status-message.success { color: var(--success-color); }
+.status-message.error { color: var(--danger-color); }
+
+/* התאמה למסכים קטנים */
+@media (max-width: 768px) {
+    .action-bar { flex-direction: column; border-radius: var(--radius-lg); padding: 15px; gap: 15px; }
+    .action-bar-actions { width: 100%; display: flex; }
+    .action-bar-actions .btn { flex: 1; }
+    .repo-badge { display: none; } /* נסתיר בנייד כדי לחסוך מקום */
+}
