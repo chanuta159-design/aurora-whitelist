@@ -211,9 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
         statusMessage.textContent = msg; 
         statusMessage.className = isErr ? 'status-message show error' : 'status-message show success'; 
         
-        // נקה טיימרים ישנים אם יש
         if (window.statusTimer) clearTimeout(window.statusTimer);
-        
         if (!keepAlive) {
             window.statusTimer = setTimeout(() => statusMessage.classList.remove('show'), 5000); 
         }
@@ -263,7 +261,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showStatus('הנתונים נטענו בהצלחה!', false);
             renderCategoriesBoard();
             
-            // תחילת סריקת תמונות ברקע רק אחרי שהכל נטען
             setTimeout(startBackgroundIconFetch, 2000);
             
         } catch (err) {
@@ -274,46 +271,66 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- BACKGROUND ICON FETCHING (MAGIC) ---
+    // פונקציית עזר לביצוע פקודת fetch שחותכת את עצמה אחרי זמן מסוים
+    const fetchWithTimeout = async (url, timeoutMs = 5000) => {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const response = await fetch(url, { signal: controller.signal });
+            clearTimeout(id);
+            return response;
+        } catch (error) {
+            clearTimeout(id);
+            throw error;
+        }
+    };
+
     const startBackgroundIconFetch = async () => {
         if (isFetchingIcons) return;
         
         const missingPkgs = authorizedApps.filter(pkg => !appIcons[pkg]);
-        if (missingPkgs.length === 0) return; // הכל מעודכן
+        if (missingPkgs.length === 0) return;
         
         isFetchingIcons = true;
         iconsModified = false;
         
-        showStatus(`סורק איקונים ברקע (${missingPkgs.length} נותרו)... ⏳`, false, true); // Keep Alive
+        console.log(`[Icon Scanner] מתחיל סריקה של ${missingPkgs.length} אפליקציות חסרות...`);
+        showStatus(`מתחיל סריקת איקונים... ⏳`, false, true);
 
         for (let i = 0; i < missingPkgs.length; i++) {
             const pkg = missingPkgs[i];
             let foundIcon = null;
 
+            console.log(`[Icon Scanner] סורק עכשיו: ${pkg} (${i + 1}/${missingPkgs.length})`);
+            showStatus(`סורק: ${pkg} (${missingPkgs.length - i} נותרו) ⏳`, false, true);
+
             try {
-                // פרוקסי 1: Codetabs
-                const res = await fetch(`https://api.codetabs.com/v1/proxy?quest=https://play.google.com/store/apps/details?id=${pkg}&hl=en`);
+                // מנסים פרוקסי 1 עם חיתוך של 6 שניות
+                const res = await fetchWithTimeout(`https://api.codetabs.com/v1/proxy?quest=https://play.google.com/store/apps/details?id=${pkg}&hl=en`, 6000);
                 const html = await res.text();
                 const match = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i) || html.match(/<img[^>]+src="([^"]+)"[^>]+alt="Icon image"/i);
                 if (match && match[1]) foundIcon = match[1];
             } catch (e) {
+                console.warn(`[Icon Scanner] פרוקסי 1 נכשל עבור ${pkg} (Timeout/Error)`);
                 try {
-                    // פרוקסי 2: AllOrigins גיבוי
+                    // גיבוי לפרוקסי 2 עם חיתוך של 6 שניות
                     const url = encodeURIComponent(`https://play.google.com/store/apps/details?id=${pkg}&hl=en`);
-                    const res = await fetch(`https://api.allorigins.win/raw?url=${url}`);
+                    const res = await fetchWithTimeout(`https://api.allorigins.win/raw?url=${url}`, 6000);
                     const html = await res.text();
                     const match = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i);
                     if (match && match[1]) foundIcon = match[1];
-                } catch (err) {}
+                } catch (err) {
+                    console.warn(`[Icon Scanner] פרוקסי 2 נכשל עבור ${pkg} (Timeout/Error)`);
+                }
             }
 
             if (foundIcon) {
-                // חותכים את התמונה לגודל קטן ואיכותי למניעת איטיות במסך
+                console.log(`[Icon Scanner] ✓ נמצא איקון עבור ${pkg}!`);
                 if (foundIcon.includes('=')) foundIcon = foundIcon.split('=')[0] + '=w128-h128-rw';
                 
                 appIcons[pkg] = foundIcon;
                 iconsModified = true;
                 
-                // עדכון התמונה ב-DOM עם אפקט Fade יפה
                 const imgElement = document.querySelector(`.app-draggable-item[data-pkg="${pkg}"] .app-icon`);
                 if (imgElement) {
                     imgElement.style.opacity = '0';
@@ -323,27 +340,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         imgElement.style.opacity = '1';
                     }, 100);
                 }
-            }
-            
-            // כל 5 בקשות או אם זו הבקשה האחרונה - מעדכנים את הודעת הסטטוס
-            if ((i + 1) % 5 === 0 || i === missingPkgs.length - 1) {
-                const remaining = missingPkgs.length - (i + 1);
-                if (remaining > 0) {
-                    showStatus(`סורק איקונים ברקע... עוד ${remaining} נותרו ⏳`, false, true);
-                }
+            } else {
+                console.log(`[Icon Scanner] ✗ לא נמצא איקון עבור ${pkg}, ממשיך הלאה.`);
             }
 
-            // המתנה של 1.2 שניות בין בקשה לבקשה למנוע חסימת "Too Many Requests" מהשרתים
-            await new Promise(r => setTimeout(r, 1200));
+            // ממתינים שנייה לפני האפליקציה הבאה
+            await new Promise(r => setTimeout(r, 1000));
         }
 
         isFetchingIcons = false;
         
         if (iconsModified) {
-            showStatus('כל האייקונים נמצאו! שומר אוטומטית ל-GitHub... 💾', false, true);
+            console.log('[Icon Scanner] סריקה הסתיימה! שומר נתונים בשקט ל-GitHub...');
+            showStatus('כל האייקונים נמצאו! שומר אוטומטית... 💾', false, true);
             await silentSaveIcons();
             showStatus('האייקונים עודכנו ונשמרו בהצלחה! 🎉', false);
         } else {
+            console.log('[Icon Scanner] הסריקה הסתיימה אך לא נמצאו איקונים חדשים.');
             showStatus('סריקת הרקע הסתיימה.', false);
         }
     };
@@ -363,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.content) iconsFileSHA = data.content.sha;
             iconsModified = false;
         } catch (e) { 
-            console.error('[Background Worker] Failed to save icons', e); 
+            console.error('[Icon Scanner] Failed to save icons', e); 
         }
     };
 
@@ -498,55 +511,4 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (ALLOWED_USERS.includes(userData.login)) {
                     localStorage.setItem('githubToken', tempToken);
-                    window.location.href = window.location.pathname;
-                } else {
-                    localStorage.clear();
-                    showAccessDenied();
-                }
-            } catch (error) {
-                alert(`שגיאת התחברות: ${error.message}`);
-                window.location.href = window.location.pathname;
-            }
-        } else {
-            githubToken = localStorage.getItem('githubToken');
-            githubUser = localStorage.getItem('githubUser');
-            githubRepo = localStorage.getItem('githubRepo');
-            if (githubToken && githubUser && githubRepo) {
-                showEditor();
-            } else {
-                showLogin();
-            }
-        }
-    };
-
-    // --- EVENT LISTENERS ---
-    loginButton.addEventListener('click', handleLogin);
-    logoutButton.addEventListener('click', handleLogout);
-    deniedLogoutButton.addEventListener('click', handleLogout);
-    saveButton.addEventListener('click', saveWhitelistToGitHub);
-    
-    if (addCategoryBtn) {
-        addCategoryBtn.addEventListener('click', () => {
-            const name = prompt('הכנס שם לקטגוריה החדשה:');
-            if (name && name.trim()) {
-                if (!categorizedData[name.trim()]) {
-                    categorizedData[name.trim()] = [];
-                    renderCategoriesBoard();
-                }
-            }
-        });
-    }
-
-    searchInput.addEventListener('input', () => { 
-        clearTimeout(debounceTimer); 
-        debounceTimer = setTimeout(searchApps, 600); 
-    });
-    
-    document.addEventListener('click', (event) => { 
-        if (!searchWrapper.contains(event.target)) { 
-            searchResultsDiv.style.display = 'none'; 
-        } 
-    });
-
-    init();
-});
+                    window.location.href = window.location.pat
