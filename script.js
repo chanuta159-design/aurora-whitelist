@@ -7,10 +7,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- STATE MANAGEMENT ---
     let authorizedApps = [];
     let appNames = [];
-    let appIcons = {}; // אובייקט חדש לשמירת האייקונים
+    let appIcons = {}; 
     let categorizedData = {};
     let catFileSHA = null, fileSHA = null, namesFileSHA = null, iconsFileSHA = null;
     let debounceTimer, githubToken = null, githubUser = '', githubRepo = '';
+    
+    // מצב סריקת רקע
+    let isFetchingIcons = false;
+    let iconsModified = false;
 
     // --- HELPER FUNCTIONS FOR UNICODE ---
     const encodeUnicode = (str) => btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1)));
@@ -98,7 +102,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const idx = authorizedApps.indexOf(pkg);
                     const displayName = appNames[idx] || pkg;
                     
-                    // משיכת האייקון או יצירת אייקון גנרי עם האות הראשונה במידה ואין
                     const iconSrc = appIcons[pkg] || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName.charAt(0))}&background=e2e8f0&color=4f46e5&font-size=0.5&bold=true`;
                     
                     const card = document.createElement('div');
@@ -179,10 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
             authorizedApps.push(pkg);
             appNames.push(title);
             
-            // שמירת האייקון החדש במאגר שלנו
-            if (iconUrl) {
-                appIcons[pkg] = iconUrl;
-            }
+            if (iconUrl) appIcons[pkg] = iconUrl;
             
             const firstCat = Object.keys(categorizedData)[0] || "כללי";
             if (!categorizedData[firstCat]) categorizedData[firstCat] = [];
@@ -221,7 +221,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const headers = { 'Authorization': `token ${githubToken}` };
         try {
-            // הוספנו משיכה של app-icons.json
             const [packageRes, namesRes, catRes, iconsRes] = await Promise.all([
                 fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/whitelist.json`, { headers }),
                 fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-names.json`, { headers }),
@@ -247,7 +246,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 categorizedData = JSON.parse(decodeUnicode(data.content));
             } else { catFileSHA = null; categorizedData = { "כללי": [] }; }
 
-            // עיבוד קובץ האייקונים (אם לא קיים עדיין, נייצר אובייקט ריק)
             if (iconsRes.ok) {
                 const data = await iconsRes.json();
                 iconsFileSHA = data.sha;
@@ -258,11 +256,74 @@ document.addEventListener('DOMContentLoaded', () => {
 
             showStatus('הנתונים נטענו בהצלחה', false);
             renderCategoriesBoard();
+            
+            // תחילת סריקת תמונות ברקע
+            startBackgroundIconFetch();
+            
         } catch (err) {
             showStatus(`שגיאה בטעינה: ${err.message}`, true);
         } finally {
             saveButton.disabled = false;
         }
+    };
+
+    // --- BACKGROUND ICON FETCHING (MAGIC) ---
+    const startBackgroundIconFetch = async () => {
+        if (isFetchingIcons) return;
+        
+        const missingPkgs = authorizedApps.filter(pkg => !appIcons[pkg]);
+        if (missingPkgs.length === 0) return; // הכל מעודכן
+        
+        isFetchingIcons = true;
+        iconsModified = false;
+        console.log(`[Background Worker] Found ${missingPkgs.length} missing icons. Starting silent sync...`);
+
+        for (const pkg of missingPkgs) {
+            try {
+                const url = encodeURIComponent(`https://play.google.com/store/apps/details?id=${pkg}`);
+                const res = await fetch(`https://api.allorigins.win/get?url=${url}`);
+                const data = await res.json();
+                const match = data.contents.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i);
+                
+                if (match && match[1]) {
+                    appIcons[pkg] = match[1];
+                    iconsModified = true;
+                    
+                    // עדכון התמונה ב-DOM בלבד מבלי לרענן את כל הלוח
+                    const imgElement = document.querySelector(`.app-draggable-item[data-pkg="${pkg}"] .app-icon`);
+                    if (imgElement) {
+                        imgElement.src = match[1];
+                        imgElement.classList.add('fade-in'); // אפקט כניסה יפה
+                    }
+                }
+            } catch (e) { console.warn(`Silent fetch failed for ${pkg}`); }
+            
+            // השהייה של 600ms כדי שגוגל לא יחסמו את הפרוקסי
+            await new Promise(r => setTimeout(r, 600));
+        }
+
+        isFetchingIcons = false;
+        
+        // אם מצאנו אייקונים חדשים, נשמור את הקובץ בשקט ל-GitHub
+        if (iconsModified) silentSaveIcons();
+    };
+
+    const silentSaveIcons = async () => {
+        try {
+            console.log('[Background Worker] Saving new icons silently to GitHub...');
+            const res = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-icons.json`, {
+                method: 'PUT',
+                headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    message: 'Auto-sync missing app icons (Background)', 
+                    content: encodeUnicode(JSON.stringify(appIcons, null, 2)), 
+                    sha: iconsFileSHA || undefined 
+                })
+            });
+            const data = await res.json();
+            if (data.content) iconsFileSHA = data.content.sha;
+            iconsModified = false;
+        } catch (e) { console.error('[Background Worker] Failed to save icons', e); }
     };
 
     const saveWhitelistToGitHub = async () => {
@@ -290,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const res3 = await req('categorized-whitelist.json', categorizedData, catFileSHA, 'Update categories via visual board');
             if (res3.content) catFileSHA = res3.content.sha;
 
-            // שמירת קובץ האייקונים ל-GitHub
+            // שמירת קובץ האייקונים יחד עם השמירה המרכזית (ליתר ביטחון)
             const res4 = await req('app-icons.json', appIcons, iconsFileSHA, 'Update app icons mapping');
             if (res4.content) iconsFileSHA = res4.content.sha;
 
@@ -342,8 +403,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!id) return;
                 
                 const title = app.title.split('-')[0].trim();
-                
-                // משיכת הקישור לאייקון מהתוצאות של גוגל (אם קיים)
                 const iconUrl = app.pagemap?.cse_image?.[0]?.src || '';
                 const displayIcon = iconUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(title.charAt(0))}&background=e2e8f0&color=64748b&bold=true`;
 
