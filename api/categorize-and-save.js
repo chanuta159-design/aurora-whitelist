@@ -57,40 +57,28 @@ export default async function handler(request, response) {
         });
         await Promise.all(scrapePromises);
 
-        // --- 5. מציאת המודל העדכני ביותר אוטומטית ---
-        let latestModel = 'gemini-3.7-flash'; // Fallback בטוח
+        // --- 5. מציאת המודל ---
+        let latestModel = 'gemini-3.7-flash'; 
         try {
             const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`);
             const modelsData = await modelsRes.json();
-            
             if (modelsData.models) {
                 const flashModels = modelsData.models.filter(m => {
                     const name = m.name.toLowerCase();
-                    return name.includes('flash') && 
-                           !name.includes('omni') && 
-                           !name.includes('experimental') &&
-                           !name.includes('exp') &&
-                           m.supportedGenerationMethods &&
-                           m.supportedGenerationMethods.includes('generateContent');
+                    return name.includes('flash') && !name.includes('omni') && !name.includes('experimental') && !name.includes('exp') && m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent');
                 });
-                
                 if (flashModels.length > 0) {
                     flashModels.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
                     latestModel = flashModels[flashModels.length - 1].name.replace('models/', '');
                 }
             }
-        } catch (e) {
-            console.warn('Failed to dynamically fetch models, using fallback', e);
-        }
-        console.log(`[AI] Selected model: ${latestModel}`);
+        } catch (e) { console.warn('Failed to fetch models', e); }
 
-
-        // --- 6. פנייה ל-AI ---
+        // --- 6. פנייה ל-AI עם פרומפט סופר-אגרסיבי ---
         const existingCategoryNames = Object.keys(existingCategories).length > 0 
             ? Object.keys(existingCategories).map(c => `"${c}"`).join(', ')
             : "אין קטגוריות קיימות. צור חדשות.";
 
-        // הוספתי פה את הסימן ` בשביל הטקסט, כדי שלא תקפוץ השגיאה!
         const prompt = `אתה מומחה לקטלוג אפליקציות עבור קהל ישראלי וחרדי.
 המערכת מכילה כבר את הקטגוריות הבאות: ${existingCategoryNames}.
 
@@ -99,11 +87,14 @@ ${scrapedAppsForPrompt.join('\n')}
 
 המשימה שלך:
 1. שבץ את האפליקציות החדשות אל תוך הקטגוריות הקיימות. 
-2. מותר לך לייצר קטגוריה חדשה בעברית אך ורק אם אף קטגוריה קיימת לא מתאימה בכלל. השתדל לאחד נושאים קרובים כדי לא ליצור קטגוריות עם אפליקציה אחת בלבד.
+2. מותר לך לייצר קטגוריה חדשה בעברית אך ורק אם אף קטגוריה קיימת לא מתאימה בכלל.
 3. ודא שכל אפליקציה מופיעה בדיוק פעם אחת.
 
-🚨 כלל ברזל קריטי - חובה לקרוא: 🚨
-לעולם אל תשנה, תערוך או תתרגם את שמות החבילות (Package Names) לעברית! עליך להשתמש במזהה החבילה המקורי באנגלית בדיוק כפי שהוא נשלח אליך (למשל: "com.whatsapp").
+🚨 אזהרה קריטית למערכת 🚨
+שמות החבילות (Package Names) הם מזהי מערכת (System IDs). 
+אסור לך בשום פנים ואופן לתרגם אותם לעברית!
+לעולם אל תתרגם את המילה "com" ל-"קום"! (למשל: "com.whatsapp" חייב להישאר "com.whatsapp").
+החזר אותם בדיוק, אבל בדיוק, כפי שהם הופיעו ברשימה ששלחתי לך.
 
 עליך להחזיר אך ורק אובייקט JSON תקין (בלי תגיות Markdown מסביב), במבנה הבא:
 {
@@ -122,17 +113,22 @@ ${scrapedAppsForPrompt.join('\n')}
         const geminiData = await geminiResponse.json();
         const rawJsonText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
         
-        if (!rawJsonText) {
-            console.error('Gemini error response:', JSON.stringify(geminiData, null, 2));
-            throw new Error('Gemini failed to generate categories');
-        }
+        if (!rawJsonText) throw new Error('Gemini failed to generate categories');
 
         const newAiCategories = JSON.parse(rawJsonText);
 
-        // --- 7. מיזוג ושמירה ---
+        // --- 7. מיזוג ושמירה + מסנן "אנטי-אידיוט" ---
         for (const [cat, pkgs] of Object.entries(newAiCategories)) {
             if (!existingCategories[cat]) existingCategories[cat] = [];
-            existingCategories[cat].push(...pkgs);
+            
+            // פילטר שמתקן בכוח את הטעויות של ה-AI אם הוא עשה אותן
+            const fixedPkgs = pkgs.map(pkg => {
+                return pkg.replace(/^קום\./, 'com.')
+                          .replace(/^איל\./, 'il.')
+                          .replace(/^אורג\./, 'org.');
+            });
+
+            existingCategories[cat].push(...fixedPkgs);
             existingCategories[cat] = [...new Set(existingCategories[cat])];
         }
 
