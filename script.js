@@ -152,6 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             categoriesBoardDiv.appendChild(catCol);
 
+            // כאן נמצא התיקון שנותן גלילה אוטומטית חלקה (Auto Scroll)
             if (window.Sortable) {
                 new Sortable(dropzone, {
                     group: 'shared-categories',
@@ -167,6 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     onEnd: syncStateFromBoard
                 });
             }
+        }
     };
 
     const syncStateFromBoard = () => {
