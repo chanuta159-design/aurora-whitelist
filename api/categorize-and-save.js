@@ -1,5 +1,3 @@
-import gplay from 'google-play-scraper';
-
 export default async function handler(request, response) {
     if (request.method !== 'POST') {
         return response.status(405).json({ error: 'Method not allowed' });
@@ -12,6 +10,9 @@ export default async function handler(request, response) {
     if (!githubToken || !authorizedApps) return response.status(400).json({ error: 'Missing parameters' });
 
     try {
+        // הנה התיקון: טעינה דינמית של הסקרייפר לפי ההוראות של Vercel
+        const gplay = (await import('google-play-scraper')).default;
+
         const fileUrl = `https://api.github.com/repos/${githubUser}/${githubRepo}/contents/categorized-whitelist.json`;
         
         // --- 1. משיכת הזיכרון (הקטגוריות הקיימות מ-GitHub) ---
@@ -65,7 +66,7 @@ export default async function handler(request, response) {
             }
         });
         
-        // ממתינים שכל השליפות מגוגל יסתיימו (הן רצות במקביל, זה לוקח שנייה אחת)
+        // ממתינים שכל השליפות מגוגל יסתיימו
         await Promise.all(scrapePromises);
 
         // --- 5. פנייה ל-AI עם הזיכרון הקיים והמידע העשיר ---
@@ -91,7 +92,9 @@ ${scrapedAppsForPrompt.join('\n')}
 }
 `;
 
-        const latestModel = 'gemini-2.5-flash'; // או 3.7 בהתאם למה שהגדרת
+        // משתמש במודל החדש
+        const latestModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+        
         const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${latestModel}:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
@@ -103,7 +106,10 @@ ${scrapedAppsForPrompt.join('\n')}
 
         const geminiData = await geminiResponse.json();
         const rawJsonText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!rawJsonText) throw new Error('Gemini failed to generate categories');
+        if (!rawJsonText) {
+            console.error(geminiData);
+            throw new Error('Gemini failed to generate categories');
+        }
 
         const newAiCategories = JSON.parse(rawJsonText);
 
