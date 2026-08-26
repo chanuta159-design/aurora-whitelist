@@ -38,7 +38,8 @@
     "il.co.yahav.mobbanking",
     "com.pepper.ldb",
     "com.ideomobile.leumicard",
-    "com.libra.chik"
+    "com.libra.chik",
+    "com.swiich.rlw"
   ],
   "בריאות, רפואה וכושר": [
     "clalit.android",
@@ -91,8 +92,7 @@
     "com.soundcorset.client.android",
     "com.bork.dsp.datuna",
     "com.google.android.apps.photos",
-    "com.adsk.sketchbook",
-    "com.swiich.rlw"
+    "com.adsk.sketchbook"
   ],
   "צבא": [
     "il.idf.doch1",
