@@ -57,7 +57,7 @@ export default async function handler(request, response) {
         });
         await Promise.all(scrapePromises);
 
-        // --- 5. מציאת המודל העדכני ביותר אוטומטית (מתעלם מ-omni) ---
+        // --- 5. מציאת המודל העדכני ביותר אוטומטית ---
         let latestModel = 'gemini-3.7-flash'; // Fallback בטוח
         try {
             const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`);
@@ -90,15 +90,8 @@ export default async function handler(request, response) {
             ? Object.keys(existingCategories).map(c => `"${c}"`).join(', ')
             : "אין קטגוריות קיימות. צור חדשות.";
 
-        const prompt = `
-אתה מומחה לקטלוג אפליקציות עבור קהל ישראלי וחרדי.
-המערכת מכילה כבר את הקטגוריות הבאות: ${existingCategoryNames}.
-
-לפניך רשימה של אפליקציות *חדשות* בצירוף התיאור הרשמי שלהן מגוגל פליי:
-${scrapedAppsForPrompt.join('\n')}
-
-המשימה שלך:const prompt = `
-אתה מומחה לקטלוג אפליקציות עבור קהל ישראלי וחרדי.
+        // הוספתי פה את הסימן ` בשביל הטקסט, כדי שלא תקפוץ השגיאה!
+        const prompt = `אתה מומחה לקטלוג אפליקציות עבור קהל ישראלי וחרדי.
 המערכת מכילה כבר את הקטגוריות הבאות: ${existingCategoryNames}.
 
 לפניך רשימה של אפליקציות *חדשות* בצירוף התיאור הרשמי שלהן מגוגל פליי:
@@ -115,8 +108,7 @@ ${scrapedAppsForPrompt.join('\n')}
 עליך להחזיר אך ורק אובייקט JSON תקין (בלי תגיות Markdown מסביב), במבנה הבא:
 {
   "שם קטגוריה": ["package.name.1", "package.name.2"]
-}
-`;
+}`;
 
         const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${latestModel}:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
