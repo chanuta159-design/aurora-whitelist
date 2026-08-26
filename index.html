@@ -4,74 +4,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="favicon.png" type="image/png">
-    <title>מנהל רשימה לבנה של Aurora Store</title>
+    <title>Aurora Store - ניהול רשימה לבנה</title>
+    <!-- פונט מודרני (Assistant) ממשפחת גוגל -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <!-- ספריית Drag & Drop -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 </head>
 <body>
 
-    <!-- העורך (מוסתר כברירת מחדל) -->
-    <div id="appContainer" style="display: none;">
+    <!-- אזור האפליקציה (מוסתר כברירת מחדל עם קלאס hidden) -->
+    <div id="appContainer" class="hidden fade-in">
         <div class="container">
-            <header>
-                <h1>מנהל רשימה לבנה של Aurora Store</h1>
-                <p>כלי פשוט לחיפוש אפליקציות וניהול הרשימה הלבנה שלך.</p>
+            <header class="main-header">
+                <div>
+                    <h1>מנהל רשימה לבנה</h1>
+                    <p>כלי פשוט וחכם לניהול אפליקציות מורשות - Aurora Store</p>
+                </div>
             </header>
+            
             <main class="main-content">
-                <h2><span class="step">1</span> חיפוש אפליקציות</h2>
-                <div class="search-wrapper">
-                    <div class="search-container">
-                        <input type="text" id="searchInput" placeholder="לדוגמה, WhatsApp, Waze..." autocomplete="off">
+                <!-- אזור חיפוש -->
+                <section class="search-section">
+                    <h2>חיפוש אפליקציה חדשה מגוגל פליי</h2>
+                    <div class="search-wrapper">
+                        <div class="search-container">
+                            <svg class="search-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <input type="text" id="searchInput" placeholder="חפש אפליקציה... (לדוגמה: Waze, WhatsApp)" autocomplete="off">
+                            <div id="searchSpinner" class="spinner hidden"></div>
+                        </div>
+                        <div id="searchResults" class="results-container"></div>
                     </div>
-                    <div id="searchResults" class="results-container"></div>
-                </div>
+                </section>
 
-                <!-- לוח הקטגוריות והגרירה (משולב בעיצוב המקורי) -->
-                <div class="categories-container-section" style="margin-top: 35px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <h2><span class="step">2</span> סידור קטגוריות ואפליקציות (גרור לשינוי מיקום)</h2>
-                        <button id="addCategoryBtn" type="button" style="background-color: #28a745; font-size: 14px; padding: 6px 14px; border-radius: 6px;">+ קטגוריה חדשה</button>
+                <!-- לוח הקטגוריות -->
+                <section class="categories-section">
+                    <div class="section-header">
+                        <h2>סידור אפליקציות וקטגוריות</h2>
+                        <button id="addCategoryBtn" type="button" class="btn btn-outline">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"></path></svg>
+                            קטגוריה חדשה
+                        </button>
                     </div>
+                    <p class="section-subtitle">גרור ושחרר אפליקציות בין הקטגוריות השונות.</p>
                     <div id="categoriesBoard" class="categories-board-grid"></div>
-                </div>
+                </section>
             </main>
         </div>
 
-        <!-- ה-Tray התחתון המקורי שלך -->
-        <div class="tray-container">
-            <div class="tray-content">
-                <div class="tray-section whitelist-section">
-                    <h2><span class="step">3</span> כל האפליקציות המאושרות (<span id="repoName"></span>)</h2>
-                    <div id="currentList" class="current-list-container"></div>
-                    <p class="empty-list-message">טוען מ-GitHub או שהרשימה שלך ריקה...</p>
-                </div>
-                <div class="tray-section github-section">
-                    <h2><span class="step">4</span> שמירת שינויים</h2>
-                    <button id="saveButton">שמור</button>
-                    <button id="logoutButton">התנתק</button>
+        <!-- Action Bar (החלף את ה-Tray התחתון הענק) -->
+        <div class="action-bar-container">
+            <div class="action-bar">
+                <div class="action-bar-info">
+                    <span class="repo-badge">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        <span id="repoName"></span>
+                    </span>
                     <div id="statusMessage" class="status-message"></div>
+                </div>
+                <div class="action-bar-actions">
+                    <button id="logoutButton" class="btn btn-secondary">התנתק</button>
+                    <button id="saveButton" class="btn btn-primary">שמור שינויים ב-GitHub</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- מסך הכניסה המקורי -->
-    <div id="loginContainer" class="login-container">
-        <h1>עורך הרשימה הלבנה</h1>
-        <p>אנא התחבר כדי לנהל את הרשימה הלבנה.</p>
-        <button id="loginButton">התחבר עם GitHub</button>
+    <!-- מסך הכניסה -->
+    <div id="loginContainer" class="auth-container fade-in hidden">
+        <div class="auth-card">
+            <div class="auth-icon">🔒</div>
+            <h1>התחברות למערכת</h1>
+            <p>אנא התחבר באמצעות חשבון ה-GitHub המורשה שלך כדי לנהל את הרשימה הלבנה.</p>
+            <button id="loginButton" class="btn btn-github">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                התחבר עם GitHub
+            </button>
+        </div>
     </div>
 
-    <!-- מסך גישה נדחתה המקורי -->
-    <div id="accessDeniedContainer" class="login-container" style="display: none;">
-        <h1>הגישה נדחתה</h1>
-        <p>חשבון ה-GitHub שאיתו התחברת אינו מורשה.</p>
-        <div class="denied-actions">
-            <button id="deniedLogoutButton">נסה שוב</button>
-            <a href="https://github.com/logout" target="_blank" class="github-logout-link">התנתק מ-GitHub</a>
+    <!-- מסך גישה נדחתה -->
+    <div id="accessDeniedContainer" class="auth-container fade-in hidden">
+        <div class="auth-card">
+            <div class="auth-icon error-icon">✋</div>
+            <h1>הגישה נדחתה</h1>
+            <p>חשבון ה-GitHub שאיתו התחברת אינו מורשה לניהול מערכת זו.</p>
+            <div class="denied-actions">
+                <button id="deniedLogoutButton" class="btn btn-primary">נסה חשבון אחר</button>
+                <a href="https://github.com/logout" target="_blank" class="github-logout-link">התנתק מ-GitHub לחלוטין</a>
+            </div>
+            <p class="small-text">שים לב: התנתקות מ-GitHub תסיים את כל החיבורים הפעילים שלך בדפדפן.</p>
         </div>
-        <p class="small-text">שים לב: התנתקות מ-GitHub תסיים את כל החיבורים הפעילים שלך.</p>
     </div>
 
     <script src="script.js"></script>
