@@ -102,7 +102,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const idx = authorizedApps.indexOf(pkg);
                     const displayName = appNames[idx] || pkg;
                     
-                    const iconSrc = appIcons[pkg] || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName.charAt(0))}&background=e2e8f0&color=4f46e5&font-size=0.5&bold=true`;
+                    let iconSrc = appIcons[pkg];
+                    // תיקון למסך שחור: תמיד נוודא שיש פרמטר גודל שמכריח את גוגל לרנדר את התמונה
+                    if (iconSrc) {
+                        iconSrc = iconSrc.split('=')[0] + '=w128-h128-rw';
+                    } else {
+                        // אווטאר גיבוי במקרה שאין תמונה
+                        iconSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName.charAt(0))}&background=e2e8f0&color=4f46e5&font-size=0.5&bold=true`;
+                    }
                     
                     const card = document.createElement('div');
                     card.className = 'app-draggable-item';
@@ -152,19 +159,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             categoriesBoardDiv.appendChild(catCol);
 
-            // כאן נמצא התיקון שנותן גלילה אוטומטית חלקה (Auto Scroll)
+            // תמיכה בגלילה אוטומטית בעת גרירה
             if (window.Sortable) {
                 new Sortable(dropzone, {
                     group: 'shared-categories',
                     animation: 200,
                     ghostClass: 'sortable-ghost',
                     easing: "cubic-bezier(0.25, 1, 0.5, 1)",
-                    scroll: true,             // הפעלת גלילה אוטומטית
-                    scrollSensitivity: 80,    // כמה פיקסלים מהקצה להתחיל לגלול
-                    scrollSpeed: 20,          // מהירות הגלילה המקסימלית
-                    bubbleScroll: true,       // מאפשר גלילה של כל חלון הדפדפן
-                    forceFallback: true,      // פותר באגים של גלילה בדפדפנים מודרניים
-                    fallbackClass: 'sortable-fallback', // קלאס עיצובי לזמן גרירה
+                    scroll: true,             
+                    scrollSensitivity: 80,    
+                    scrollSpeed: 20,          
+                    bubbleScroll: true,       
+                    forceFallback: true,      
+                    fallbackClass: 'sortable-fallback', 
                     onEnd: syncStateFromBoard
                 });
             }
@@ -189,7 +196,10 @@ document.addEventListener('DOMContentLoaded', () => {
             authorizedApps.push(pkg);
             appNames.push(title);
             
-            if (iconUrl) appIcons[pkg] = iconUrl;
+            if (iconUrl) {
+                // שומרים את הקישור מנוקה
+                appIcons[pkg] = iconUrl.split('=')[0];
+            }
             
             const firstCat = Object.keys(categorizedData)[0] || "כללי";
             if (!categorizedData[firstCat]) categorizedData[firstCat] = [];
@@ -268,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showStatus('הנתונים נטענו בהצלחה!', false);
             renderCategoriesBoard();
             
-            // מפעיל את השאיבה השקטה רק אחרי שהכל הוצג
+            // מפעיל סריקה רק לאפליקציות שממש חסר להן מפתח באובייקט
             setTimeout(startBackgroundIconFetch, 2000);
             
         } catch (err) {
@@ -288,62 +298,55 @@ document.addEventListener('DOMContentLoaded', () => {
         isFetchingIcons = true;
         iconsModified = false;
         
-        console.log(`[Icon Scanner] מתחיל סריקה של ${missingPkgs.length} אפליקציות חסרות דרך השרת...`);
-        showStatus(`סורק איקונים חסרים דרך השרת... ⏳`, false, true);
+        console.log(`[Icon Scanner] מתחיל סריקה של ${missingPkgs.length} אפליקציות חסרות...`);
+        showStatus(`סורק איקונים חסרים... ⏳`, false, true);
 
         for (let i = 0; i < missingPkgs.length; i++) {
             const pkg = missingPkgs[i];
             let foundIcon = null;
 
-            console.log(`[Icon Scanner] שולף מ-Vercel: ${pkg} (${i + 1}/${missingPkgs.length})`);
-            showStatus(`סורק מול השרת: ${pkg} (${missingPkgs.length - i} נותרו) ⏳`, false, true);
+            showStatus(`סורק: ${pkg} (${missingPkgs.length - i} נותרו) ⏳`, false, true);
 
             try {
-                // קריאה ישירה ואלגנטית ל-API שלך! בלי לחסום את הדפדפן.
                 const res = await fetch(`/api/get-icon?pkg=${pkg}`);
                 if (res.ok) {
                     const data = await res.json();
                     if (data.success && data.icon) {
                         foundIcon = data.icon;
-                        console.log(`[Icon Scanner] ✓ נמצא איקון עבור ${pkg}!`);
                     }
-                } else {
-                    console.log(`[Icon Scanner] ✗ לא נמצא איקון עבור ${pkg} בשרת.`);
                 }
             } catch (e) {
                 console.warn(`[Icon Scanner] שגיאת תקשורת מול השרת עבור ${pkg}`);
             }
 
             if (foundIcon) {
-                if (foundIcon.includes('=')) foundIcon = foundIcon.split('=')[0] + '=w128-h128-rw';
-                
+                // תמיד חותכים ושומרים את הבסיס הנקי (הגודל מתווסף בתצוגה)
+                foundIcon = foundIcon.split('=')[0];
                 appIcons[pkg] = foundIcon;
                 iconsModified = true;
                 
+                // נרנדר את הלוח מחדש כדי שהתמונה תופיע מיד
                 const imgElement = document.querySelector(`.app-draggable-item[data-pkg="${pkg}"] .app-icon`);
                 if (imgElement) {
                     imgElement.style.opacity = '0';
                     setTimeout(() => {
-                        imgElement.src = foundIcon;
+                        imgElement.src = foundIcon + '=w128-h128-rw';
                         imgElement.style.transition = 'opacity 0.5s ease-in';
                         imgElement.style.opacity = '1';
                     }, 100);
                 }
             }
 
-            // נחכה רגע קט כדי לא לעשות ספאם לשרת Vercel שלך
             await new Promise(r => setTimeout(r, 400));
         }
 
         isFetchingIcons = false;
         
         if (iconsModified) {
-            console.log('[Icon Scanner] סריקה הסתיימה! שומר נתונים בשקט ל-GitHub...');
             showStatus('כל האייקונים נמשכו! שומר אוטומטית... 💾', false, true);
             await silentSaveIcons();
             showStatus('האייקונים עודכנו ונשמרו בהצלחה! 🎉', false);
         } else {
-            console.log('[Icon Scanner] הסריקה הסתיימה אך לא נמצאו איקונים חדשים.');
             showStatus('סריקת הרקע הסתיימה.', false);
         }
     };
@@ -443,7 +446,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!id) return;
                 
                 const title = app.title.split('-')[0].trim();
-                const iconUrl = app.pagemap?.cse_image?.[0]?.src || '';
+                let iconUrl = app.pagemap?.cse_image?.[0]?.src || '';
+                
+                // תיקון למסך שחור גם בתוצאות החיפוש!
+                if (iconUrl) iconUrl = iconUrl.split('=')[0] + '=w128-h128-rw';
+                
                 const displayIcon = iconUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(title.charAt(0))}&background=e2e8f0&color=64748b&bold=true`;
 
                 const item = document.createElement('div');
