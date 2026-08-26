@@ -4,6 +4,7 @@
     "com.siddurim.klilat_yofi.ashkenaz",
     "org.sefaria.sefaria",
     "com.tehilim.book",
+    "il.co.hamichlol",
     "il.co.tikkunhaklali",
     "com.khl.kiosk",
     "com.khl.www2",
@@ -12,8 +13,7 @@
     "com.nedarim.nedarimplus",
     "com.minyan",
     "com.dandodev.TfilaFinder",
-    "fm.jewishmusic.application",
-    "com.MizrahiTefahot.nh"
+    "fm.jewishmusic.application"
   ],
   "תחבורה, רכב וניווט": [
     "com.waze",
@@ -37,6 +37,7 @@
     "com.fibi.nativeapp",
     "il.co.yahav.mobbanking",
     "com.pepper.ldb",
+    "com.MizrahiTefahot.nh",
     "com.ideomobile.leumicard",
     "com.libra.chik",
     "com.swiich.rlw"
@@ -68,14 +69,9 @@
     "com.google.android.apps.tasks"
   ],
   "כלי מערכת, ניהול ואבטחה": [
-    "il.co.hamichlol",
-    "com.alphainventor.filemanager",
-    "com.niki.filemanagerplus",
-    "com.fileplusss.mage",
     "com.google.android.apps.translate",
     "com.alert.meserhadash",
     "moe.shizuku.privileged.api",
-    "com.mtv.sai",
     "com.emanuelef.remote_capture",
     "com.google.android.apps.adm",
     "com.google.android.apps.kids.familylink",
@@ -84,7 +80,6 @@
   "בית חכם, מדיה ופנאי": [
     "com.tuya.smart",
     "com.tuya.smartlife",
-    "com.osapps.airremote",
     "com.jingyuan.lamp",
     "com.harman.ble.jbllink",
     "com.nothing.smartcenter",
@@ -99,5 +94,12 @@
     "il.idf.zuzu",
     "com.shift.idf",
     "com.idf.mitgaisim"
+  ],
+  "כלים": [
+    "com.osapps.airremote",
+    "com.alphainventor.filemanager",
+    "com.niki.filemanagerplus",
+    "com.fileplusss.mage",
+    "com.mtv.sai"
   ]
 }
