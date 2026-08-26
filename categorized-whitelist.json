@@ -1,0 +1,132 @@
+{
+  "כלים": [
+    "com.nothing.smartcenter",
+    "com.jingyuan.lamp",
+    "com.fileplusss.mage",
+    "moe.shizuku.privileged.api",
+    "com.niki.filemanagerplus",
+    "com.google.android.apps.adm",
+    "com.osapps.airremote",
+    "com.alert.meserhadash",
+    "com.mtv.sai",
+    "com.google.android.apps.translate",
+    "com.emanuelef.remote_capture",
+    "com.google.android.apps.kids.familylinkhelper",
+    "com.google.android.apps.kids.familylink"
+  ],
+  "מפות וניווט": [
+    "com.dandodev.TfilaFinder",
+    "il.idf.zuzu",
+    "com.minyan",
+    "com.unicell.pangoandroid",
+    "com.waze",
+    "קו.הופון.רב-פס",
+    "co.hopon.client",
+    "com.egged.egg",
+    "com.shift.idf",
+    "com.tranzmate"
+  ],
+  "כלי רכב": [
+    "com.neusoft.qdrivelink"
+  ],
+  "עסקים": [
+    "us.zoom.videomeetings"
+  ],
+  "יהדות ותורה": [
+    "com.kosharot.simulator",
+    "androidYeshiva.apps.yeshiva.yeshivawebsite",
+    "il.co.hamichlol",
+    "com.tehilim.book",
+    "קום.הלשון",
+    "com.khl.kiosk",
+    "com.khl.www2",
+    "org.sefaria.sefaria",
+    "tfilon.tfilon",
+    "il.co.tikkunhaklali",
+    "com.siddurim.klilat_yofi.ashkenaz"
+  ],
+  "פיננסיים": [
+    "com.nedarim.nedarimplus",
+    "com.libra.chik",
+    "com.MizrahiTefahot.nh",
+    "קום.ביט",
+    "com.bnhp.payments.paymentsapp",
+    "com.ideomobile.leumicard",
+    "com.pepper.ldb",
+    "קום.פייבוקס",
+    "קום.לאומי",
+    "com.payboxapp",
+    "com.leumi.leumiwallet",
+    "com.ideomobile.discount",
+    "com.fibi.nativeapp",
+    "il.co.yahav.mobbanking"
+  ],
+  "לשיפור הפרודוקטיביות": [
+    "com.idf.mitgaisim",
+    "il.idf.doch1",
+    "com.alphainventor.filemanager",
+    "com.google.android.apps.docs.editors.docs",
+    "com.google.android.apps.tasks",
+    "com.google.android.apps.docs",
+    "com.microsoft.office.excel",
+    "com.microsoft.office.word",
+    "com.google.android.apps.docs.editors.sheets",
+    "com.adobe.reader",
+    "com.google.android.keep"
+  ],
+  "החיים הטובים": [
+    "com.tuya.smart",
+    "il.co.inmanage.ten",
+    "com.tuya.smartlife"
+  ],
+  "תקשורת": [
+    "com.whatsapp",
+    "mitmachim.top",
+    "com.google.android.apps.messaging",
+    "com.google.android.contacts",
+    "com.google.android.gm"
+  ],
+  "בריאות וכושר": [
+    "com.strava",
+    "com.connect_computer.boostnew"
+  ],
+  "נסיעות והסביבה הקרובה": [
+    "קום.מפות",
+    "com.google.android.apps.maps",
+    "קום.שייר",
+    "קום.רכבת",
+    "com.positive_apps.buzz_car.prod",
+    "קום.סיטי",
+    "com.moblin.israeltrain",
+    "קום.גט",
+    "com.gettaxi.android",
+    "קום.סיטיקאר",
+    "com.citycar.flutter"
+  ],
+  "אמנות ועיצוב": [
+    "קום.סקצ'בוק",
+    "com.adsk.sketchbook"
+  ],
+  "בידור": [
+    "com.harman.ble.jbllink"
+  ],
+  "מוזיקה ואודיו": [
+    "com.soundcorset.client.android",
+    "fm.jewishmusic.application",
+    "com.bork.dsp.datuna"
+  ],
+  "קניות": [
+    "קום.ארנק",
+    "com.swiich.rlw"
+  ],
+  "רפואה": [
+    "קום.לאומית",
+    "leumit.mobile",
+    "org.meuhedet.android",
+    "clalit.android",
+    "com.ideomobile.maccabi"
+  ],
+  "צילום": [
+    "com.google.android.apps.photos"
+  ]
+}
