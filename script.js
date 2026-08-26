@@ -261,6 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showStatus('הנתונים נטענו בהצלחה!', false);
             renderCategoriesBoard();
             
+            // מפעיל את השאיבה השקטה רק אחרי שהכל הוצג
             setTimeout(startBackgroundIconFetch, 2000);
             
         } catch (err) {
@@ -270,21 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- BACKGROUND ICON FETCHING (MAGIC) ---
-    // פונקציית עזר לביצוע פקודת fetch שחותכת את עצמה אחרי זמן מסוים
-    const fetchWithTimeout = async (url, timeoutMs = 5000) => {
-        const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-            const response = await fetch(url, { signal: controller.signal });
-            clearTimeout(id);
-            return response;
-        } catch (error) {
-            clearTimeout(id);
-            throw error;
-        }
-    };
-
+    // --- BACKGROUND ICON FETCHING (USING YOUR VERCEL BACKEND) ---
     const startBackgroundIconFetch = async () => {
         if (isFetchingIcons) return;
         
@@ -294,38 +281,33 @@ document.addEventListener('DOMContentLoaded', () => {
         isFetchingIcons = true;
         iconsModified = false;
         
-        console.log(`[Icon Scanner] מתחיל סריקה של ${missingPkgs.length} אפליקציות חסרות...`);
-        showStatus(`מתחיל סריקת איקונים... ⏳`, false, true);
+        console.log(`[Icon Scanner] מתחיל סריקה של ${missingPkgs.length} אפליקציות חסרות דרך השרת...`);
+        showStatus(`סורק איקונים חסרים דרך השרת... ⏳`, false, true);
 
         for (let i = 0; i < missingPkgs.length; i++) {
             const pkg = missingPkgs[i];
             let foundIcon = null;
 
-            console.log(`[Icon Scanner] סורק עכשיו: ${pkg} (${i + 1}/${missingPkgs.length})`);
-            showStatus(`סורק: ${pkg} (${missingPkgs.length - i} נותרו) ⏳`, false, true);
+            console.log(`[Icon Scanner] שולף מ-Vercel: ${pkg} (${i + 1}/${missingPkgs.length})`);
+            showStatus(`סורק מול השרת: ${pkg} (${missingPkgs.length - i} נותרו) ⏳`, false, true);
 
             try {
-                // מנסים פרוקסי 1 עם חיתוך של 6 שניות
-                const res = await fetchWithTimeout(`https://api.codetabs.com/v1/proxy?quest=https://play.google.com/store/apps/details?id=${pkg}&hl=en`, 6000);
-                const html = await res.text();
-                const match = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i) || html.match(/<img[^>]+src="([^"]+)"[^>]+alt="Icon image"/i);
-                if (match && match[1]) foundIcon = match[1];
-            } catch (e) {
-                console.warn(`[Icon Scanner] פרוקסי 1 נכשל עבור ${pkg} (Timeout/Error)`);
-                try {
-                    // גיבוי לפרוקסי 2 עם חיתוך של 6 שניות
-                    const url = encodeURIComponent(`https://play.google.com/store/apps/details?id=${pkg}&hl=en`);
-                    const res = await fetchWithTimeout(`https://api.allorigins.win/raw?url=${url}`, 6000);
-                    const html = await res.text();
-                    const match = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i);
-                    if (match && match[1]) foundIcon = match[1];
-                } catch (err) {
-                    console.warn(`[Icon Scanner] פרוקסי 2 נכשל עבור ${pkg} (Timeout/Error)`);
+                // קריאה ישירה ואלגנטית ל-API שלך! בלי לחסום את הדפדפן.
+                const res = await fetch(`/api/get-icon?pkg=${pkg}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success && data.icon) {
+                        foundIcon = data.icon;
+                        console.log(`[Icon Scanner] ✓ נמצא איקון עבור ${pkg}!`);
+                    }
+                } else {
+                    console.log(`[Icon Scanner] ✗ לא נמצא איקון עבור ${pkg} בשרת.`);
                 }
+            } catch (e) {
+                console.warn(`[Icon Scanner] שגיאת תקשורת מול השרת עבור ${pkg}`);
             }
 
             if (foundIcon) {
-                console.log(`[Icon Scanner] ✓ נמצא איקון עבור ${pkg}!`);
                 if (foundIcon.includes('=')) foundIcon = foundIcon.split('=')[0] + '=w128-h128-rw';
                 
                 appIcons[pkg] = foundIcon;
@@ -340,19 +322,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         imgElement.style.opacity = '1';
                     }, 100);
                 }
-            } else {
-                console.log(`[Icon Scanner] ✗ לא נמצא איקון עבור ${pkg}, ממשיך הלאה.`);
             }
 
-            // ממתינים שנייה לפני האפליקציה הבאה
-            await new Promise(r => setTimeout(r, 1000));
+            // נחכה רגע קט כדי לא לעשות ספאם לשרת Vercel שלך
+            await new Promise(r => setTimeout(r, 400));
         }
 
         isFetchingIcons = false;
         
         if (iconsModified) {
             console.log('[Icon Scanner] סריקה הסתיימה! שומר נתונים בשקט ל-GitHub...');
-            showStatus('כל האייקונים נמצאו! שומר אוטומטית... 💾', false, true);
+            showStatus('כל האייקונים נמשכו! שומר אוטומטית... 💾', false, true);
             await silentSaveIcons();
             showStatus('האייקונים עודכנו ונשמרו בהצלחה! 🎉', false);
         } else {
@@ -511,4 +491,55 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (ALLOWED_USERS.includes(userData.login)) {
                     localStorage.setItem('githubToken', tempToken);
-                    window.location.href = window.location.pat
+                    window.location.href = window.location.pathname;
+                } else {
+                    localStorage.clear();
+                    showAccessDenied();
+                }
+            } catch (error) {
+                alert(`שגיאת התחברות: ${error.message}`);
+                window.location.href = window.location.pathname;
+            }
+        } else {
+            githubToken = localStorage.getItem('githubToken');
+            githubUser = localStorage.getItem('githubUser');
+            githubRepo = localStorage.getItem('githubRepo');
+            if (githubToken && githubUser && githubRepo) {
+                showEditor();
+            } else {
+                showLogin();
+            }
+        }
+    };
+
+    // --- EVENT LISTENERS ---
+    loginButton.addEventListener('click', handleLogin);
+    logoutButton.addEventListener('click', handleLogout);
+    deniedLogoutButton.addEventListener('click', handleLogout);
+    saveButton.addEventListener('click', saveWhitelistToGitHub);
+    
+    if (addCategoryBtn) {
+        addCategoryBtn.addEventListener('click', () => {
+            const name = prompt('הכנס שם לקטגוריה החדשה:');
+            if (name && name.trim()) {
+                if (!categorizedData[name.trim()]) {
+                    categorizedData[name.trim()] = [];
+                    renderCategoriesBoard();
+                }
+            }
+        });
+    }
+
+    searchInput.addEventListener('input', () => { 
+        clearTimeout(debounceTimer); 
+        debounceTimer = setTimeout(searchApps, 600); 
+    });
+    
+    document.addEventListener('click', (event) => { 
+        if (!searchWrapper.contains(event.target)) { 
+            searchResultsDiv.style.display = 'none'; 
+        } 
+    });
+
+    init();
+});
