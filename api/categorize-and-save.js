@@ -10,9 +10,7 @@ export default async function handler(request, response) {
     if (!githubToken || !authorizedApps) return response.status(400).json({ error: 'Missing parameters' });
 
     try {
-        // הנה התיקון: טעינה דינמית של הסקרייפר לפי ההוראות של Vercel
         const gplay = (await import('google-play-scraper')).default;
-
         const fileUrl = `https://api.github.com/repos/${githubUser}/${githubRepo}/contents/categorized-whitelist.json`;
         
         // --- 1. משיכת הזיכרון (הקטגוריות הקיימות מ-GitHub) ---
@@ -23,26 +21,21 @@ export default async function handler(request, response) {
         if (checkRes.ok) {
             const checkData = await checkRes.json();
             currentSha = checkData.sha;
-            // פענוח מ-Base64
             const decodedContent = Buffer.from(checkData.content, 'base64').toString('utf8');
             existingCategories = JSON.parse(decodedContent);
         }
 
-        // --- 2. ניקיון: הסרת אפליקציות שכבר לא מורשות (שנמחקו מהרשימה) ---
+        // --- 2. ניקיון ---
         const validAuthorizedSet = new Set(authorizedApps);
         for (const cat in existingCategories) {
             existingCategories[cat] = existingCategories[cat].filter(pkg => validAuthorizedSet.has(pkg));
-            // אם קטגוריה התרוקנה לגמרי, נמחק אותה
-            if (existingCategories[cat].length === 0) {
-                delete existingCategories[cat];
-            }
+            if (existingCategories[cat].length === 0) delete existingCategories[cat];
         }
 
-        // --- 3. זיהוי אפליקציות חדשות שעדיין לא קוטלגו ---
+        // --- 3. זיהוי אפליקציות חדשות ---
         const alreadyCategorizedSet = new Set(Object.values(existingCategories).flat());
         const newPackages = authorizedApps.filter(pkg => !alreadyCategorizedSet.has(pkg));
 
-        // אם אין אפליקציות חדשות, נשמור רק את הניקיון שעשינו ונסתלק (חוסך פנייה ל-AI!)
         if (newPackages.length === 0) {
             await saveToGithub(existingCategories, currentSha, githubToken, githubUser, githubRepo, 'Cleanup removed apps');
             return response.status(200).json({ success: true, message: 'No new apps. Cleanup saved.', categories: existingCategories });
@@ -50,26 +43,49 @@ export default async function handler(request, response) {
 
         console.log(`[AI] Found ${newPackages.length} new apps. Fetching data from Google Play...`);
 
-        // --- 4. שליפת תיאורים מגוגל פליי עבור האפליקציות *החדשות בלבד* ---
+        // --- 4. שליפת תיאורים מגוגל פליי (רק לחדשות) ---
         const scrapedAppsForPrompt = [];
         const scrapePromises = newPackages.map(async (pkg) => {
             try {
-                // מביאים מידע בעברית ומישראל
                 const appInfo = await gplay.app({ appId: pkg, lang: 'he', country: 'il' });
-                // לוקחים רק את 300 התווים הראשונים של התיאור כדי לא להעמיס על ה-AI
                 const shortDesc = appInfo.description.substring(0, 300).replace(/\n/g, ' ');
                 scrapedAppsForPrompt.push(`Package: "${pkg}", Title: "${appInfo.title}", Category: "${appInfo.genre}", Description: "${shortDesc}"`);
             } catch (e) {
-                // אם האפליקציה לא בחנות (למשל APK פרטי), נשלח רק את החבילה
                 console.warn(`Could not scrape Google Play for ${pkg}`);
                 scrapedAppsForPrompt.push(`Package: "${pkg}", Title: "Unknown", Description: "No metadata available"`);
             }
         });
-        
-        // ממתינים שכל השליפות מגוגל יסתיימו
         await Promise.all(scrapePromises);
 
-        // --- 5. פנייה ל-AI עם הזיכרון הקיים והמידע העשיר ---
+        // --- 5. מציאת המודל העדכני ביותר אוטומטית (מתעלם מ-omni) ---
+        let latestModel = 'gemini-3.7-flash'; // Fallback בטוח
+        try {
+            const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`);
+            const modelsData = await modelsRes.json();
+            
+            if (modelsData.models) {
+                const flashModels = modelsData.models.filter(m => {
+                    const name = m.name.toLowerCase();
+                    return name.includes('flash') && 
+                           !name.includes('omni') && 
+                           !name.includes('experimental') &&
+                           !name.includes('exp') &&
+                           m.supportedGenerationMethods &&
+                           m.supportedGenerationMethods.includes('generateContent');
+                });
+                
+                if (flashModels.length > 0) {
+                    flashModels.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+                    latestModel = flashModels[flashModels.length - 1].name.replace('models/', '');
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to dynamically fetch models, using fallback', e);
+        }
+        console.log(`[AI] Selected model: ${latestModel}`);
+
+
+        // --- 6. פנייה ל-AI ---
         const existingCategoryNames = Object.keys(existingCategories).length > 0 
             ? Object.keys(existingCategories).map(c => `"${c}"`).join(', ')
             : "אין קטגוריות קיימות. צור חדשות.";
@@ -92,9 +108,6 @@ ${scrapedAppsForPrompt.join('\n')}
 }
 `;
 
-        // משתמש במודל החדש
-        const latestModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-        
         const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${latestModel}:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_API_KEY },
@@ -106,27 +119,22 @@ ${scrapedAppsForPrompt.join('\n')}
 
         const geminiData = await geminiResponse.json();
         const rawJsonText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+        
         if (!rawJsonText) {
-            console.error(geminiData);
+            console.error('Gemini error response:', JSON.stringify(geminiData, null, 2));
             throw new Error('Gemini failed to generate categories');
         }
 
         const newAiCategories = JSON.parse(rawJsonText);
 
-        // --- 6. מיזוג התוצאות של ה-AI עם הזיכרון הקיים ---
+        // --- 7. מיזוג ושמירה ---
         for (const [cat, pkgs] of Object.entries(newAiCategories)) {
-            if (!existingCategories[cat]) {
-                existingCategories[cat] = []; // יצירת קטגוריה חדשה אם ה-AI המציא אחת
-            }
-            // הוספת האפליקציות החדשות לקטגוריה
+            if (!existingCategories[cat]) existingCategories[cat] = [];
             existingCategories[cat].push(...pkgs);
-            // מחיקת כפילויות ליתר ביטחון
             existingCategories[cat] = [...new Set(existingCategories[cat])];
         }
 
-        // --- 7. שמירה חזרה ל-GitHub ---
         await saveToGithub(existingCategories, currentSha, githubToken, githubUser, githubRepo, 'Added new apps via AI scraping');
-
         return response.status(200).json({ success: true, categories: existingCategories });
 
     } catch (err) {
@@ -135,22 +143,14 @@ ${scrapedAppsForPrompt.join('\n')}
     }
 }
 
-// פונקציית עזר לשמירה בגיטהאב
 async function saveToGithub(jsonObj, sha, token, user, repo, commitMessage) {
     const fileUrl = `https://api.github.com/repos/${user}/${repo}/contents/categorized-whitelist.json`;
     const contentBase64 = Buffer.from(JSON.stringify(jsonObj, null, 2)).toString('base64');
     
     const putRes = await fetch(fileUrl, {
         method: 'PUT',
-        headers: {
-            'Authorization': `token ${token}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            message: commitMessage,
-            content: contentBase64,
-            sha: sha || undefined
-        })
+        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: commitMessage, content: contentBase64, sha: sha || undefined })
     });
     if (!putRes.ok) {
         const err = await putRes.json();
