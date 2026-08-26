@@ -217,3 +217,5 @@ input[type="text"]:focus { outline: none; border-color: var(--primary-color); ba
 }
 /* תיקון קטן לשורת החיפוש כדי שהכפתור יישאר בצד שמאל */
 .search-result-item button { margin-right: auto; }
+/* עיצוב לאלמנט שנגרר באוויר */
+.sortable-fallback { opacity: 1 !important; cursor: grabbing !important; box-shadow: var(--shadow-lg) !important; z-index: 9999 !important; }
