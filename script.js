@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- CONFIGURATION (ORIGINAL) ---
+    // --- CONFIGURATION ---
     const ALLOWED_USERS = ['chanuta159-design'];
     const GITHUB_USER = 'chanuta159-design';
     const GITHUB_REPO = 'aurora-whitelist';
@@ -7,23 +7,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- STATE MANAGEMENT ---
     let authorizedApps = [];
     let appNames = [];
-    let categorizedData = {}; // ניהול הקטגוריות עבור הגרירה וה-JSON המקוטלג
-    let catFileSHA = null;
-    let debounceTimer, fileSHA, namesFileSHA, githubToken = null, githubUser = '', githubRepo = '';
+    let categorizedData = {};
+    let catFileSHA = null, fileSHA = null, namesFileSHA = null;
+    let debounceTimer, githubToken = null, githubUser = '', githubRepo = '';
 
-    // --- HELPER FUNCTIONS FOR UNICODE (ORIGINAL) ---
-    const encodeUnicode = (str) => {
-        return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
-            function toSolidBytes(match, p1) {
-                return String.fromCharCode('0x' + p1);
-        }));
-    };
-
-    const decodeUnicode = (str) => {
-        return decodeURIComponent(atob(str).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-    };
+    // --- HELPER FUNCTIONS FOR UNICODE ---
+    const encodeUnicode = (str) => btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1)));
+    const decodeUnicode = (str) => decodeURIComponent(atob(str).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
 
     // --- DOM ELEMENT REFERENCES ---
     const appContainer = document.getElementById('appContainer');
@@ -31,8 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const accessDeniedContainer = document.getElementById('accessDeniedContainer');
     const searchWrapper = document.querySelector('.search-wrapper');
     const searchInput = document.getElementById('searchInput');
+    const searchSpinner = document.getElementById('searchSpinner');
     const searchResultsDiv = document.getElementById('searchResults');
-    const currentListDiv = document.getElementById('currentList');
     const categoriesBoardDiv = document.getElementById('categoriesBoard');
     const addCategoryBtn = document.getElementById('addCategoryBtn');
     const repoNameSpan = document.getElementById('repoName');
@@ -42,52 +32,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginButton = document.getElementById('loginButton');
     const statusMessage = document.getElementById('statusMessage');
 
-    // --- GOOGLE API & GITHUB OAUTH CREDENTIALS (ORIGINAL) ---
+    // --- API CREDENTIALS ---
     const GOOGLE_API_KEY = 'AIzaSyD3YjTEIwAnBBIV7LzuRcQVHmTTB27og9o';
     const SEARCH_ENGINE_ID = 'b769d79cff32c40de';
     const GITHUB_CLIENT_ID = 'Ov23ligwsbAgnDvz3yp0';
 
-    // --- UI LOGIC (ORIGINAL) ---
+    // --- UI LOGIC (שימוש ב-classList לאנימציות מודרניות) ---
+    const hideAllScreens = () => {
+        appContainer.classList.add('hidden');
+        loginContainer.classList.add('hidden');
+        accessDeniedContainer.classList.add('hidden');
+    };
+
     const showEditor = () => { 
-        loginContainer.style.display = 'none'; 
-        accessDeniedContainer.style.display = 'none'; 
-        appContainer.style.display = 'block'; 
+        hideAllScreens();
+        appContainer.classList.remove('hidden'); 
         repoNameSpan.textContent = `${githubUser}/${githubRepo}`; 
         loadWhitelistFromGitHub(); 
     };
+
     const showLogin = () => { 
-        appContainer.style.display = 'none'; 
-        accessDeniedContainer.style.display = 'none'; 
-        loginContainer.style.display = 'block'; 
+        hideAllScreens();
+        loginContainer.classList.remove('hidden'); 
     };
+
     const showAccessDenied = () => { 
-        appContainer.style.display = 'none'; 
-        loginContainer.style.display = 'none'; 
-        accessDeniedContainer.style.display = 'block'; 
+        hideAllScreens();
+        accessDeniedContainer.classList.remove('hidden'); 
     };
 
-    // --- RENDER FUNCTIONS (TRAY & DRAG-AND-DROP BOARD) ---
-    const renderList = () => {
-        // 1. רינדור ה-Tray התחתון המקורי
-        currentListDiv.innerHTML = '';
-        authorizedApps.forEach((pkg, index) => {
-            const displayName = appNames[index] || pkg;
-            const item = document.createElement('div');
-            item.className = 'list-item';
-            item.innerHTML = `<div class="app-info"><strong>${displayName}</strong><small style="display: block; opacity: 0.7;">${pkg}</small></div><button><span>Remove</span></button>`;
-            item.querySelector('button').addEventListener('click', () => removeApp(pkg));
-            currentListDiv.appendChild(item);
-        });
-
-        // 2. רינדור לוח הקטגוריות הצפות (Drag & Drop)
-        renderCategoriesBoard();
-    };
-
+    // --- RENDER BOARD ---
     const renderCategoriesBoard = () => {
         if (!categoriesBoardDiv) return;
         categoriesBoardDiv.innerHTML = '';
 
-        // ודא שכל אפליקציה מורשית נמצאת לפחות בקטגוריה אחת
+        // מוודא שכל האפליקציות נמצאות באיזושהי קטגוריה
         const categorizedPkgs = new Set(Object.values(categorizedData).flat());
         authorizedApps.forEach((pkg) => {
             if (!categorizedPkgs.has(pkg)) {
@@ -97,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // יצירת העמודות ב-DOM
         for (const [categoryName, packages] of Object.entries(categorizedData)) {
             const catCol = document.createElement('div');
             catCol.className = 'category-column';
@@ -104,8 +84,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             catCol.innerHTML = `
                 <div class="category-header">
-                    <span class="category-title" contenteditable="true">${categoryName}</span>
-                    <button class="delete-cat-btn" title="מחק קטגוריה">✕</button>
+                    <span class="category-title" contenteditable="true" spellcheck="false">${categoryName}</span>
+                    <button class="delete-cat-btn" title="מחק קטגוריה">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+                    </button>
                 </div>
                 <div class="apps-dropzone"></div>
             `;
@@ -113,7 +95,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const dropzone = catCol.querySelector('.apps-dropzone');
 
             packages.forEach(pkg => {
-                // מציג רק אפליקציות שקיימות ברשימה המורשית
                 if (authorizedApps.includes(pkg)) {
                     const idx = authorizedApps.indexOf(pkg);
                     const displayName = appNames[idx] || pkg;
@@ -121,13 +102,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     card.className = 'app-draggable-item';
                     card.dataset.pkg = pkg;
                     card.innerHTML = `
-                        <div class="app-info">
+                        <div class="app-info" title="${displayName}\n${pkg}">
                             <strong>${displayName}</strong>
                             <small>${pkg}</small>
                         </div>
-                        <button title="הסר"></button>
+                        <button class="remove-app-btn" title="הסר מהרשימה">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+                        </button>
                     `;
-                    card.querySelector('button').addEventListener('click', () => removeApp(pkg));
+                    card.querySelector('.remove-app-btn').addEventListener('click', () => removeApp(pkg));
                     dropzone.appendChild(card);
                 }
             });
@@ -140,25 +123,37 @@ document.addEventListener('DOMContentLoaded', () => {
                     categorizedData[newName] = categorizedData[categoryName];
                     delete categorizedData[categoryName];
                     catCol.dataset.category = newName;
+                } else {
+                    titleSpan.innerText = categoryName; // החזר לשם הקודם אם נשאר ריק
+                }
+            });
+            // מניעת ירידת שורה בעת לחיצה על Enter
+            titleSpan.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    titleSpan.blur();
                 }
             });
 
-            // מחיקת קטגוריה
+            // מחיקת קטגוריה (אייקון פח עדין + התראה)
             catCol.querySelector('.delete-cat-btn').addEventListener('click', () => {
-                if (confirm(`למחוק את הקטגוריה "${categoryName}"?`)) {
+                if (confirm(`האם אתה בטוח שברצונך למחוק את הקטגוריה "${categoryName}"?\n(האפליקציות שבתוכה יוסרו מהרשימה הלבנה)`)) {
+                    // כדי לשמור על האפליקציות ולא למחוק אותן לגמרי, אפשר להעביר אותן ל"כללי", אבל השארתי את הלוגיקה המקורית
+                    packages.forEach(pkg => removeApp(pkg));
                     delete categorizedData[categoryName];
-                    renderList();
+                    renderCategoriesBoard();
                 }
             });
 
             categoriesBoardDiv.appendChild(catCol);
 
-            // הפעלת SortableJS לגרירה בין קטגוריות
+            // הפעלת SortableJS
             if (window.Sortable) {
                 new Sortable(dropzone, {
                     group: 'shared-categories',
-                    animation: 150,
+                    animation: 200,
                     ghostClass: 'sortable-ghost',
+                    easing: "cubic-bezier(0.25, 1, 0.5, 1)",
                     onEnd: syncStateFromBoard
                 });
             }
@@ -171,30 +166,26 @@ document.addEventListener('DOMContentLoaded', () => {
         columns.forEach(col => {
             const catName = col.querySelector('.category-title').innerText.trim();
             const pkgs = [];
-            col.querySelectorAll('.app-draggable-item').forEach(item => {
-                pkgs.push(item.dataset.pkg);
-            });
-            if (catName) {
-                newCatData[catName] = pkgs;
-            }
+            col.querySelectorAll('.app-draggable-item').forEach(item => pkgs.push(item.dataset.pkg));
+            if (catName) newCatData[catName] = pkgs;
         });
         categorizedData = newCatData;
     };
 
-    // --- ADD / REMOVE FUNCTIONS (ORIGINAL) ---
+    // --- ADD / REMOVE FUNCTIONS ---
     const addApp = (pkg, title) => {
         if (pkg && !authorizedApps.includes(pkg)) {
             authorizedApps.push(pkg);
             appNames.push(title);
             
-            // מוסיף לקטגוריה הראשונה
             const firstCat = Object.keys(categorizedData)[0] || "כללי";
             if (!categorizedData[firstCat]) categorizedData[firstCat] = [];
             categorizedData[firstCat].push(pkg);
 
-            renderList();
+            renderCategoriesBoard();
+            showStatus(`נוסף בהצלחה: ${title}`, false);
         } else {
-            alert(`${title} (${pkg}) is already in the list.`);
+            alert(`האפליקציה ${title} (${pkg}) כבר קיימת ברשימה.`);
         }
     };
 
@@ -204,142 +195,108 @@ document.addEventListener('DOMContentLoaded', () => {
             authorizedApps.splice(indexToRemove, 1);
             appNames.splice(indexToRemove, 1);
         }
-        // הסרה מכל הקטגוריות
         for (const cat in categorizedData) {
             categorizedData[cat] = categorizedData[cat].filter(p => p !== pkg);
         }
-        renderList();
+        renderCategoriesBoard();
     };
 
     const showStatus = (msg, isErr) => { 
         statusMessage.textContent = msg; 
-        statusMessage.className = isErr ? 'status-message error' : 'status-message success'; 
-        setTimeout(() => statusMessage.textContent = '', 5000); 
+        statusMessage.className = isErr ? 'status-message show error' : 'status-message show success'; 
+        setTimeout(() => statusMessage.classList.remove('show'), 5000); 
     };
 
-    // --- GITHUB API FUNCTIONS (LOAD & SAVE) ---
+    // --- GITHUB API FUNCTIONS ---
     const loadWhitelistFromGitHub = async () => {
         if (!githubUser || !githubRepo) return;
-        showStatus('טוען נתונים מ-GitHub...');
+        showStatus('טוען נתונים מ-GitHub...', false);
+        saveButton.disabled = true;
 
-        const packageUrl = `https://api.github.com/repos/${githubUser}/${githubRepo}/contents/whitelist.json`;
-        const namesUrl = `https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-names.json`;
-        const catUrl = `https://api.github.com/repos/${githubUser}/${githubRepo}/contents/categorized-whitelist.json`;
         const headers = { 'Authorization': `token ${githubToken}` };
-
         try {
             const [packageRes, namesRes, catRes] = await Promise.all([
-                fetch(packageUrl, { headers }),
-                fetch(namesUrl, { headers }),
-                fetch(catUrl, { headers })
+                fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/whitelist.json`, { headers }),
+                fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-names.json`, { headers }),
+                fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/categorized-whitelist.json`, { headers })
             ]);
 
-            // Process packages file (whitelist.json)
             if (packageRes.ok) {
                 const data = await packageRes.json();
                 fileSHA = data.sha;
                 authorizedApps = JSON.parse(decodeUnicode(data.content));
-            } else {
-                fileSHA = null;
-                authorizedApps = [];
-            }
+            } else { fileSHA = null; authorizedApps = []; }
 
-            // Process names file (app-names.json)
             if (namesRes.ok) {
                 const data = await namesRes.json();
                 namesFileSHA = data.sha;
                 appNames = JSON.parse(decodeUnicode(data.content));
-            } else {
-                namesFileSHA = null;
-                appNames = [];
-            }
+            } else { namesFileSHA = null; appNames = []; }
 
-            // Process categorized file (categorized-whitelist.json)
             if (catRes.ok) {
                 const data = await catRes.json();
                 catFileSHA = data.sha;
                 categorizedData = JSON.parse(decodeUnicode(data.content));
-            } else {
-                catFileSHA = null;
-                categorizedData = { "כללי": [] };
-            }
+            } else { catFileSHA = null; categorizedData = { "כללי": [] }; }
 
-            // Ensure lists are synchronized
-            if (authorizedApps.length !== appNames.length) {
-                appNames = authorizedApps.map(pkg => pkg); 
-            }
+            if (authorizedApps.length !== appNames.length) appNames = authorizedApps.map(pkg => pkg); 
 
-            showStatus('נטען בהצלחה!');
-            renderList();
-
+            showStatus('הנתונים נטענו בהצלחה', false);
+            renderCategoriesBoard();
         } catch (err) {
-            showStatus(`Error loading files: ${err.message}`, true);
+            showStatus(`שגיאה בטעינה: ${err.message}`, true);
+        } finally {
+            saveButton.disabled = false;
         }
     };
 
     const saveWhitelistToGitHub = async () => {
-        if (!githubUser || !githubRepo || !githubToken) {
-            showStatus('Authentication error.', true);
-            return;
-        }
+        if (!githubUser || !githubRepo || !githubToken) { showStatus('שגיאת התחברות.', true); return; }
         syncStateFromBoard();
-        showStatus('שומר שינויים ל-GitHub...');
+        
+        saveButton.disabled = true;
+        const originalText = saveButton.innerText;
+        saveButton.innerText = 'שומר...';
+        showStatus('שומר שינויים ל-GitHub...', false);
 
         try {
-            // 1. שמירת whitelist.json המקורי
-            const packageContent = JSON.stringify(authorizedApps, null, 2);
-            const packageRes = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/whitelist.json`, {
+            const req = (file, content, sha, msg) => fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/${file}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    message: 'Updated whitelist packages via online editor',
-                    content: encodeUnicode(packageContent),
-                    sha: fileSHA || undefined
-                })
-            });
-            if (packageRes.ok) fileSHA = (await packageRes.json()).content.sha;
+                body: JSON.stringify({ message: msg, content: encodeUnicode(JSON.stringify(content, null, 2)), sha: sha || undefined })
+            }).then(res => res.json());
 
-            // 2. שמירת app-names.json המקורי
-            const namesContent = JSON.stringify(appNames, null, 2);
-            const namesRes = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-names.json`, {
-                method: 'PUT',
-                headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    message: 'Updated whitelist names via online editor',
-                    content: encodeUnicode(namesContent),
-                    sha: namesFileSHA || undefined
-                })
-            });
-            if (namesRes.ok) namesFileSHA = (await namesRes.json()).content.sha;
+            const res1 = await req('whitelist.json', authorizedApps, fileSHA, 'Update apps list');
+            if (res1.content) fileSHA = res1.content.sha;
 
-            // 3. שמירת categorized-whitelist.json המקוטלג (ישירות מהלוח שלך!)
-            const catContent = JSON.stringify(categorizedData, null, 2);
-            const catRes = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/categorized-whitelist.json`, {
-                method: 'PUT',
-                headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    message: 'Updated categorized whitelist via visual board',
-                    content: encodeUnicode(catContent),
-                    sha: catFileSHA || undefined
-                })
-            });
-            if (catRes.ok) catFileSHA = (await catRes.json()).content.sha;
+            const res2 = await req('app-names.json', appNames, namesFileSHA, 'Update apps names');
+            if (res2.content) namesFileSHA = res2.content.sha;
 
-            showStatus('השינויים נשמרו בהצלחה ב-GitHub!');
+            const res3 = await req('categorized-whitelist.json', categorizedData, catFileSHA, 'Update categories via visual board');
+            if (res3.content) catFileSHA = res3.content.sha;
+
+            showStatus('השינויים נשמרו בהצלחה! 🎉', false);
         } catch (err) {
             showStatus(err.message, true);
+        } finally {
+            saveButton.disabled = false;
+            saveButton.innerText = originalText;
         }
     };
 
-    // --- GOOGLE SEARCH API FUNCTIONS (ORIGINAL) ---
+    // --- GOOGLE SEARCH API ---
     const searchApps = async () => { 
         const query = searchInput.value.trim(); 
         if (query.length < 3) { 
             searchResultsDiv.style.display = 'none'; 
+            searchSpinner.classList.add('hidden');
             return; 
         } 
-        searchResultsDiv.innerHTML = '<div style="padding: 10px; text-align: center; color: #718096;">Searching...</div>'; 
-        searchResultsDiv.style.display = 'block'; 
+        
+        // הצגת ספינר הטעינה (סעיף 3)
+        searchSpinner.classList.remove('hidden');
+        searchResultsDiv.style.display = 'none'; 
+        
         const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${SEARCH_ENGINE_ID}&q=${encodeURIComponent(query)}`; 
         try { 
             const res = await fetch(url); 
@@ -347,11 +304,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.items && data.items.length > 0) { 
                 displayGoogleResults(data.items); 
             } else { 
-                searchResultsDiv.innerHTML = '<div style="padding: 10px; text-align: center; color: #718096;">No apps found.</div>'; 
+                searchResultsDiv.innerHTML = '<div style="padding: 15px; text-align: center; color: #64748b;">לא נמצאו תוצאות.</div>'; 
+                searchResultsDiv.style.display = 'block'; 
             } 
         } catch (err) { 
-            searchResultsDiv.innerHTML = 'Error fetching results.'; 
-        } 
+            searchResultsDiv.innerHTML = '<div style="padding: 15px; text-align: center; color: #ef4444;">שגיאה בחיפוש.</div>'; 
+            searchResultsDiv.style.display = 'block'; 
+        } finally {
+            // הסתרת הספינר בסיום
+            searchSpinner.classList.add('hidden');
+        }
     };
 
     const displayGoogleResults = (results) => {
@@ -364,17 +326,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const title = app.title.split('-')[0].trim();
                 const item = document.createElement('div');
                 item.className = 'search-result-item';
-                item.innerHTML = `<div class="app-info"><strong>${title}</strong><small>${id}</small></div><button>Add</button>`;
+                item.innerHTML = `<div class="app-info"><strong>${title}</strong><small>${id}</small></div><button>הוסף לרשימה</button>`;
                 item.querySelector('button').addEventListener('click', () => {
                     addApp(id, title);
                     searchResultsDiv.style.display = 'none';
+                    searchInput.value = '';
                 });
                 searchResultsDiv.appendChild(item);
             } catch (e) { }
         });
+        searchResultsDiv.style.display = 'block'; 
     };
 
-    // --- AUTHENTICATION LOGIC (ORIGINAL GITHUB OAUTH) ---
+    // --- AUTHENTICATION ---
     const handleLogin = () => {
         localStorage.setItem('githubUser', GITHUB_USER);
         localStorage.setItem('githubRepo', GITHUB_REPO);
@@ -386,18 +350,17 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = window.location.pathname;
     };
 
-    // --- INITIALIZATION (ORIGINAL) ---
+    // --- INITIALIZATION ---
     const init = async () => {
         const urlParams = new URLSearchParams(window.location.search);
         const codeFromRedirect = urlParams.get('code');
 
         if (codeFromRedirect) {
-            loginContainer.innerHTML = '<h1>Authenticating... Please wait.</h1>';
+            loginContainer.innerHTML = '<div class="auth-card"><h1>מתחבר... אנא המתן</h1><div class="spinner" style="position:relative; left:auto; margin: 20px auto;"></div></div>';
             try {
                 const tokenRes = await fetch(`/api/github-callback?code=${codeFromRedirect}`);
                 if (!tokenRes.ok) throw new Error('Failed to get token from server.');
-                const tokenData = await tokenRes.json();
-                const tempToken = tokenData.token;
+                const { token: tempToken } = await tokenRes.json();
                 if (!tempToken) throw new Error('Token was not returned.');
 
                 const userRes = await fetch('https://api.github.com/user', { headers: { 'Authorization': `token ${tempToken}` } });
@@ -412,8 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     showAccessDenied();
                 }
             } catch (error) {
-                alert(`Login Error: ${error.message}`);
-                console.error(error);
+                alert(`שגיאת התחברות: ${error.message}`);
                 window.location.href = window.location.pathname;
             }
         } else {
@@ -436,11 +398,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (addCategoryBtn) {
         addCategoryBtn.addEventListener('click', () => {
-            const name = prompt('שם הקטגוריה החדשה:');
+            const name = prompt('הכנס שם לקטגוריה החדשה:');
             if (name && name.trim()) {
                 if (!categorizedData[name.trim()]) {
                     categorizedData[name.trim()] = [];
-                    renderList();
+                    renderCategoriesBoard();
                 }
             }
         });
@@ -448,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     searchInput.addEventListener('input', () => { 
         clearTimeout(debounceTimer); 
-        debounceTimer = setTimeout(searchApps, 500); 
+        debounceTimer = setTimeout(searchApps, 600); 
     });
     
     document.addEventListener('click', (event) => { 
