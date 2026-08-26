@@ -27,8 +27,7 @@
     "com.citycar.flutter",
     "com.positive_apps.buzz_car.prod",
     "il.co.inmanage.ten",
-    "com.neusoft.qdrivelink",
-    "il.idf.zuzu"
+    "com.neusoft.qdrivelink"
   ],
   "פיננסים, בנקים ותשלומים": [
     "com.bnhp.payments.paymentsapp",
@@ -57,7 +56,7 @@
     "mitmachim.top",
     "us.zoom.videomeetings"
   ],
-  "פרודוקטיביות, משרד וצבא": [
+  "פרודוקטיביות": [
     "com.google.android.apps.docs",
     "com.google.android.apps.docs.editors.docs",
     "com.google.android.apps.docs.editors.sheets",
@@ -68,11 +67,11 @@
     "com.google.android.apps.tasks"
   ],
   "כלי מערכת, ניהול ואבטחה": [
+    "il.co.hamichlol",
     "com.alphainventor.filemanager",
     "com.niki.filemanagerplus",
     "com.fileplusss.mage",
     "com.google.android.apps.translate",
-    "il.co.hamichlol",
     "com.alert.meserhadash",
     "moe.shizuku.privileged.api",
     "com.mtv.sai",
@@ -97,6 +96,7 @@
   ],
   "צבא": [
     "il.idf.doch1",
+    "il.idf.zuzu",
     "com.shift.idf",
     "com.idf.mitgaisim"
   ]
