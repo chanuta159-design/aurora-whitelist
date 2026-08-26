@@ -1,0 +1,7 @@
+{
+  "name": "aurora-whitelist",
+  "version": "1.0.0",
+  "dependencies": {
+    "google-play-scraper": "^10.0.0"
+  }
+}
