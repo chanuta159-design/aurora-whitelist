@@ -207,10 +207,16 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCategoriesBoard();
     };
 
-    const showStatus = (msg, isErr) => { 
+    const showStatus = (msg, isErr, keepAlive = false) => { 
         statusMessage.textContent = msg; 
         statusMessage.className = isErr ? 'status-message show error' : 'status-message show success'; 
-        setTimeout(() => statusMessage.classList.remove('show'), 5000); 
+        
+        // נקה טיימרים ישנים אם יש
+        if (window.statusTimer) clearTimeout(window.statusTimer);
+        
+        if (!keepAlive) {
+            window.statusTimer = setTimeout(() => statusMessage.classList.remove('show'), 5000); 
+        }
     };
 
     // --- GITHUB API FUNCTIONS ---
@@ -225,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/whitelist.json`, { headers }),
                 fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-names.json`, { headers }),
                 fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/categorized-whitelist.json`, { headers }),
-                fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-icons.json`, { headers })
+                fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-icons.json`, { headers }).catch(() => ({ ok: false }))
             ]);
 
             if (packageRes.ok) {
@@ -254,11 +260,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (authorizedApps.length !== appNames.length) appNames = authorizedApps.map(pkg => pkg); 
 
-            showStatus('הנתונים נטענו בהצלחה', false);
+            showStatus('הנתונים נטענו בהצלחה!', false);
             renderCategoriesBoard();
             
-            // תחילת סריקת תמונות ברקע
-            startBackgroundIconFetch();
+            // תחילת סריקת תמונות ברקע רק אחרי שהכל נטען
+            setTimeout(startBackgroundIconFetch, 2000);
             
         } catch (err) {
             showStatus(`שגיאה בטעינה: ${err.message}`, true);
@@ -276,46 +282,79 @@ document.addEventListener('DOMContentLoaded', () => {
         
         isFetchingIcons = true;
         iconsModified = false;
-        console.log(`[Background Worker] Found ${missingPkgs.length} missing icons. Starting silent sync...`);
+        
+        showStatus(`סורק איקונים ברקע (${missingPkgs.length} נותרו)... ⏳`, false, true); // Keep Alive
 
-        for (const pkg of missingPkgs) {
+        for (let i = 0; i < missingPkgs.length; i++) {
+            const pkg = missingPkgs[i];
+            let foundIcon = null;
+
             try {
-                const url = encodeURIComponent(`https://play.google.com/store/apps/details?id=${pkg}`);
-                const res = await fetch(`https://api.allorigins.win/get?url=${url}`);
-                const data = await res.json();
-                const match = data.contents.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i);
+                // פרוקסי 1: Codetabs
+                const res = await fetch(`https://api.codetabs.com/v1/proxy?quest=https://play.google.com/store/apps/details?id=${pkg}&hl=en`);
+                const html = await res.text();
+                const match = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i) || html.match(/<img[^>]+src="([^"]+)"[^>]+alt="Icon image"/i);
+                if (match && match[1]) foundIcon = match[1];
+            } catch (e) {
+                try {
+                    // פרוקסי 2: AllOrigins גיבוי
+                    const url = encodeURIComponent(`https://play.google.com/store/apps/details?id=${pkg}&hl=en`);
+                    const res = await fetch(`https://api.allorigins.win/raw?url=${url}`);
+                    const html = await res.text();
+                    const match = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i);
+                    if (match && match[1]) foundIcon = match[1];
+                } catch (err) {}
+            }
+
+            if (foundIcon) {
+                // חותכים את התמונה לגודל קטן ואיכותי למניעת איטיות במסך
+                if (foundIcon.includes('=')) foundIcon = foundIcon.split('=')[0] + '=w128-h128-rw';
                 
-                if (match && match[1]) {
-                    appIcons[pkg] = match[1];
-                    iconsModified = true;
-                    
-                    // עדכון התמונה ב-DOM בלבד מבלי לרענן את כל הלוח
-                    const imgElement = document.querySelector(`.app-draggable-item[data-pkg="${pkg}"] .app-icon`);
-                    if (imgElement) {
-                        imgElement.src = match[1];
-                        imgElement.classList.add('fade-in'); // אפקט כניסה יפה
-                    }
+                appIcons[pkg] = foundIcon;
+                iconsModified = true;
+                
+                // עדכון התמונה ב-DOM עם אפקט Fade יפה
+                const imgElement = document.querySelector(`.app-draggable-item[data-pkg="${pkg}"] .app-icon`);
+                if (imgElement) {
+                    imgElement.style.opacity = '0';
+                    setTimeout(() => {
+                        imgElement.src = foundIcon;
+                        imgElement.style.transition = 'opacity 0.5s ease-in';
+                        imgElement.style.opacity = '1';
+                    }, 100);
                 }
-            } catch (e) { console.warn(`Silent fetch failed for ${pkg}`); }
+            }
             
-            // השהייה של 600ms כדי שגוגל לא יחסמו את הפרוקסי
-            await new Promise(r => setTimeout(r, 600));
+            // כל 5 בקשות או אם זו הבקשה האחרונה - מעדכנים את הודעת הסטטוס
+            if ((i + 1) % 5 === 0 || i === missingPkgs.length - 1) {
+                const remaining = missingPkgs.length - (i + 1);
+                if (remaining > 0) {
+                    showStatus(`סורק איקונים ברקע... עוד ${remaining} נותרו ⏳`, false, true);
+                }
+            }
+
+            // המתנה של 1.2 שניות בין בקשה לבקשה למנוע חסימת "Too Many Requests" מהשרתים
+            await new Promise(r => setTimeout(r, 1200));
         }
 
         isFetchingIcons = false;
         
-        // אם מצאנו אייקונים חדשים, נשמור את הקובץ בשקט ל-GitHub
-        if (iconsModified) silentSaveIcons();
+        if (iconsModified) {
+            showStatus('כל האייקונים נמצאו! שומר אוטומטית ל-GitHub... 💾', false, true);
+            await silentSaveIcons();
+            showStatus('האייקונים עודכנו ונשמרו בהצלחה! 🎉', false);
+        } else {
+            showStatus('סריקת הרקע הסתיימה.', false);
+        }
     };
 
     const silentSaveIcons = async () => {
         try {
-            console.log('[Background Worker] Saving new icons silently to GitHub...');
             const res = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-icons.json`, {
                 method: 'PUT',
                 headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    message: 'Auto-sync missing app icons (Background)', 
+                    message: 'Auto-sync missing app icons (Background worker)', 
                     content: encodeUnicode(JSON.stringify(appIcons, null, 2)), 
                     sha: iconsFileSHA || undefined 
                 })
@@ -323,7 +362,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (data.content) iconsFileSHA = data.content.sha;
             iconsModified = false;
-        } catch (e) { console.error('[Background Worker] Failed to save icons', e); }
+        } catch (e) { 
+            console.error('[Background Worker] Failed to save icons', e); 
+        }
     };
 
     const saveWhitelistToGitHub = async () => {
@@ -333,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveButton.disabled = true;
         const originalText = saveButton.innerText;
         saveButton.innerText = 'שומר...';
-        showStatus('שומר שינויים ל-GitHub...', false);
+        showStatus('שומר שינויים ל-GitHub...', false, true);
 
         try {
             const req = (file, content, sha, msg) => fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/${file}`, {
@@ -351,7 +392,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const res3 = await req('categorized-whitelist.json', categorizedData, catFileSHA, 'Update categories via visual board');
             if (res3.content) catFileSHA = res3.content.sha;
 
-            // שמירת קובץ האייקונים יחד עם השמירה המרכזית (ליתר ביטחון)
             const res4 = await req('app-icons.json', appIcons, iconsFileSHA, 'Update app icons mapping');
             if (res4.content) iconsFileSHA = res4.content.sha;
 
