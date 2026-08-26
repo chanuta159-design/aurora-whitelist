@@ -7,8 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- STATE MANAGEMENT ---
     let authorizedApps = [];
     let appNames = [];
+    let appIcons = {}; // אובייקט חדש לשמירת האייקונים
     let categorizedData = {};
-    let catFileSHA = null, fileSHA = null, namesFileSHA = null;
+    let catFileSHA = null, fileSHA = null, namesFileSHA = null, iconsFileSHA = null;
     let debounceTimer, githubToken = null, githubUser = '', githubRepo = '';
 
     // --- HELPER FUNCTIONS FOR UNICODE ---
@@ -37,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const SEARCH_ENGINE_ID = 'b769d79cff32c40de';
     const GITHUB_CLIENT_ID = 'Ov23ligwsbAgnDvz3yp0';
 
-    // --- UI LOGIC (שימוש ב-classList לאנימציות מודרניות) ---
+    // --- UI LOGIC ---
     const hideAllScreens = () => {
         appContainer.classList.add('hidden');
         loginContainer.classList.add('hidden');
@@ -66,7 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!categoriesBoardDiv) return;
         categoriesBoardDiv.innerHTML = '';
 
-        // מוודא שכל האפליקציות נמצאות באיזושהי קטגוריה
         const categorizedPkgs = new Set(Object.values(categorizedData).flat());
         authorizedApps.forEach((pkg) => {
             if (!categorizedPkgs.has(pkg)) {
@@ -76,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // יצירת העמודות ב-DOM
         for (const [categoryName, packages] of Object.entries(categorizedData)) {
             const catCol = document.createElement('div');
             catCol.className = 'category-column';
@@ -98,13 +97,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (authorizedApps.includes(pkg)) {
                     const idx = authorizedApps.indexOf(pkg);
                     const displayName = appNames[idx] || pkg;
+                    
+                    // משיכת האייקון או יצירת אייקון גנרי עם האות הראשונה במידה ואין
+                    const iconSrc = appIcons[pkg] || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName.charAt(0))}&background=e2e8f0&color=4f46e5&font-size=0.5&bold=true`;
+                    
                     const card = document.createElement('div');
                     card.className = 'app-draggable-item';
                     card.dataset.pkg = pkg;
                     card.innerHTML = `
-                        <div class="app-info" title="${displayName}\n${pkg}">
-                            <strong>${displayName}</strong>
-                            <small>${pkg}</small>
+                        <div class="app-item-content">
+                            <img src="${iconSrc}" class="app-icon" alt="${displayName}" loading="lazy" />
+                            <div class="app-info" title="${displayName}\n${pkg}">
+                                <strong>${displayName}</strong>
+                                <small>${pkg}</small>
+                            </div>
                         </div>
                         <button class="remove-app-btn" title="הסר מהרשימה">
                             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"></path></svg>
@@ -115,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // עריכת שם קטגוריה
             const titleSpan = catCol.querySelector('.category-title');
             titleSpan.addEventListener('blur', () => {
                 const newName = titleSpan.innerText.trim();
@@ -124,10 +129,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     delete categorizedData[categoryName];
                     catCol.dataset.category = newName;
                 } else {
-                    titleSpan.innerText = categoryName; // החזר לשם הקודם אם נשאר ריק
+                    titleSpan.innerText = categoryName;
                 }
             });
-            // מניעת ירידת שורה בעת לחיצה על Enter
             titleSpan.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -135,10 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // מחיקת קטגוריה (אייקון פח עדין + התראה)
             catCol.querySelector('.delete-cat-btn').addEventListener('click', () => {
                 if (confirm(`האם אתה בטוח שברצונך למחוק את הקטגוריה "${categoryName}"?\n(האפליקציות שבתוכה יוסרו מהרשימה הלבנה)`)) {
-                    // כדי לשמור על האפליקציות ולא למחוק אותן לגמרי, אפשר להעביר אותן ל"כללי", אבל השארתי את הלוגיקה המקורית
                     packages.forEach(pkg => removeApp(pkg));
                     delete categorizedData[categoryName];
                     renderCategoriesBoard();
@@ -147,7 +149,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             categoriesBoardDiv.appendChild(catCol);
 
-            // הפעלת SortableJS
             if (window.Sortable) {
                 new Sortable(dropzone, {
                     group: 'shared-categories',
@@ -173,10 +174,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- ADD / REMOVE FUNCTIONS ---
-    const addApp = (pkg, title) => {
+    const addApp = (pkg, title, iconUrl) => {
         if (pkg && !authorizedApps.includes(pkg)) {
             authorizedApps.push(pkg);
             appNames.push(title);
+            
+            // שמירת האייקון החדש במאגר שלנו
+            if (iconUrl) {
+                appIcons[pkg] = iconUrl;
+            }
             
             const firstCat = Object.keys(categorizedData)[0] || "כללי";
             if (!categorizedData[firstCat]) categorizedData[firstCat] = [];
@@ -215,10 +221,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const headers = { 'Authorization': `token ${githubToken}` };
         try {
-            const [packageRes, namesRes, catRes] = await Promise.all([
+            // הוספנו משיכה של app-icons.json
+            const [packageRes, namesRes, catRes, iconsRes] = await Promise.all([
                 fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/whitelist.json`, { headers }),
                 fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-names.json`, { headers }),
-                fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/categorized-whitelist.json`, { headers })
+                fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/categorized-whitelist.json`, { headers }),
+                fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-icons.json`, { headers })
             ]);
 
             if (packageRes.ok) {
@@ -238,6 +246,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 catFileSHA = data.sha;
                 categorizedData = JSON.parse(decodeUnicode(data.content));
             } else { catFileSHA = null; categorizedData = { "כללי": [] }; }
+
+            // עיבוד קובץ האייקונים (אם לא קיים עדיין, נייצר אובייקט ריק)
+            if (iconsRes.ok) {
+                const data = await iconsRes.json();
+                iconsFileSHA = data.sha;
+                appIcons = JSON.parse(decodeUnicode(data.content));
+            } else { iconsFileSHA = null; appIcons = {}; }
 
             if (authorizedApps.length !== appNames.length) appNames = authorizedApps.map(pkg => pkg); 
 
@@ -275,6 +290,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const res3 = await req('categorized-whitelist.json', categorizedData, catFileSHA, 'Update categories via visual board');
             if (res3.content) catFileSHA = res3.content.sha;
 
+            // שמירת קובץ האייקונים ל-GitHub
+            const res4 = await req('app-icons.json', appIcons, iconsFileSHA, 'Update app icons mapping');
+            if (res4.content) iconsFileSHA = res4.content.sha;
+
             showStatus('השינויים נשמרו בהצלחה! 🎉', false);
         } catch (err) {
             showStatus(err.message, true);
@@ -293,7 +312,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return; 
         } 
         
-        // הצגת ספינר הטעינה (סעיף 3)
         searchSpinner.classList.remove('hidden');
         searchResultsDiv.style.display = 'none'; 
         
@@ -311,7 +329,6 @@ document.addEventListener('DOMContentLoaded', () => {
             searchResultsDiv.innerHTML = '<div style="padding: 15px; text-align: center; color: #ef4444;">שגיאה בחיפוש.</div>'; 
             searchResultsDiv.style.display = 'block'; 
         } finally {
-            // הסתרת הספינר בסיום
             searchSpinner.classList.add('hidden');
         }
     };
@@ -323,12 +340,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 const url = new URL(app.link);
                 const id = url.searchParams.get('id');
                 if (!id) return;
+                
                 const title = app.title.split('-')[0].trim();
+                
+                // משיכת הקישור לאייקון מהתוצאות של גוגל (אם קיים)
+                const iconUrl = app.pagemap?.cse_image?.[0]?.src || '';
+                const displayIcon = iconUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(title.charAt(0))}&background=e2e8f0&color=64748b&bold=true`;
+
                 const item = document.createElement('div');
                 item.className = 'search-result-item';
-                item.innerHTML = `<div class="app-info"><strong>${title}</strong><small>${id}</small></div><button>הוסף לרשימה</button>`;
+                item.innerHTML = `
+                    <img src="${displayIcon}" class="search-result-icon" alt="${title}" loading="lazy" />
+                    <div class="app-info">
+                        <strong>${title}</strong>
+                        <small>${id}</small>
+                    </div>
+                    <button class="btn btn-primary" style="padding: 6px 14px; font-size: 13px;">הוסף</button>
+                `;
                 item.querySelector('button').addEventListener('click', () => {
-                    addApp(id, title);
+                    addApp(id, title, iconUrl);
                     searchResultsDiv.style.display = 'none';
                     searchInput.value = '';
                 });
