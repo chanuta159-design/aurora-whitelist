@@ -201,3 +201,19 @@ input[type="text"]:focus { outline: none; border-color: var(--primary-color); ba
     .action-bar-actions .btn { flex: 1; }
     .repo-badge { display: none; } /* נסתיר בנייד כדי לחסוך מקום */
 }
+/* --- עיצוב אייקונים לאפליקציות --- */
+.app-item-content { 
+    display: flex; align-items: center; gap: 12px; overflow: hidden; 
+}
+.app-icon { 
+    width: 34px; height: 34px; border-radius: 8px; 
+    object-fit: cover; box-shadow: var(--shadow-sm); flex-shrink: 0;
+    background-color: var(--border-color); /* רקע למקרה של טעינה */
+}
+.search-result-icon { 
+    width: 44px; height: 44px; border-radius: 10px; 
+    object-fit: cover; margin-left: 15px; box-shadow: var(--shadow-sm); 
+    flex-shrink: 0;
+}
+/* תיקון קטן לשורת החיפוש כדי שהכפתור יישאר בצד שמאל */
+.search-result-item button { margin-right: auto; }
