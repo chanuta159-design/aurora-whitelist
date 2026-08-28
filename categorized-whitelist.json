@@ -13,7 +13,8 @@
     "com.nedarim.nedarimplus",
     "com.minyan",
     "com.dandodev.TfilaFinder",
-    "fm.jewishmusic.application"
+    "fm.jewishmusic.application",
+    "com.spotify.music"
   ],
   "תחבורה, רכב וניווט": [
     "com.waze",
