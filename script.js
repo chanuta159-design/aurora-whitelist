@@ -371,15 +371,40 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const saveWhitelistToGitHub = async () => {
-        if (!githubUser || !githubRepo || !githubToken) { showStatus('שגיאת התחברות.', true); return; }
-        syncStateFromBoard();
+        if (!githubUser || !githubRepo || !githubToken) { 
+            showStatus('שגיאת התחברות.', true); 
+            return; 
+        }
         
         saveButton.disabled = true;
         const originalText = saveButton.innerText;
-        saveButton.innerText = 'שומר...';
-        showStatus('שומר שינויים ל-GitHub...', false, true);
+        saveButton.innerText = 'מקטלג ושומר עם AI... 🤖';
+        showStatus('ה-AI סורק ומקטלג אפליקציות חדשות, אנא המתן... ⏳', false, true);
 
         try {
+            // 1. קריאה ל-API הקיים שלך (שממיין באמצעות Gemini ושומר ישירות ל-GitHub)
+            const aiRes = await fetch('/api/categorize-and-save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    authorizedApps: authorizedApps,
+                    githubToken: githubToken,
+                    githubUser: githubUser,
+                    githubRepo: githubRepo
+                })
+            });
+
+            const aiData = await aiRes.json();
+            if (!aiRes.ok) {
+                throw new Error(aiData.error || 'שגיאה בקטלוג ה-AI');
+            }
+
+            // עדכון הנתונים המקומיים לפי מה שה-AI סידר ושמר
+            if (aiData.categories) {
+                categorizedData = aiData.categories;
+            }
+
+            // 2. שמירת שאר הקבצים (רשימת השמות, החבילות והאייקונים)
             const req = (file, content, sha, msg) => fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/${file}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
@@ -392,15 +417,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const res2 = await req('app-names.json', appNames, namesFileSHA, 'Update apps names');
             if (res2.content) namesFileSHA = res2.content.sha;
 
-            const res3 = await req('categorized-whitelist.json', categorizedData, catFileSHA, 'Update categories via visual board');
-            if (res3.content) catFileSHA = res3.content.sha;
-
             const res4 = await req('app-icons.json', appIcons, iconsFileSHA, 'Update app icons mapping');
             if (res4.content) iconsFileSHA = res4.content.sha;
 
-            showStatus('השינויים נשמרו בהצלחה! 🎉', false);
+            // ציור מחדש של הלוח עם הקטלוג הנכון של ה-AI
+            renderCategoriesBoard();
+            showStatus('כל השינויים קוטלגו ע"י ה-AI ונשמרו בהצלחה ב-GitHub! 🎉', false);
+
         } catch (err) {
-            showStatus(err.message, true);
+            console.error(err);
+            showStatus(`שגיאה בשמירה: ${err.message}`, true);
         } finally {
             saveButton.disabled = false;
             saveButton.innerText = originalText;
