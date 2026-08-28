@@ -12,7 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let catFileSHA = null, fileSHA = null, namesFileSHA = null, iconsFileSHA = null;
     let debounceTimer, githubToken = null, githubUser = '', githubRepo = '';
     
-    // מצב סריקת רקע
+    // קטלוג האפליקציות של CFOPUSER לחיפוש מהיר
+    let cfopuserAppsCatalog = [];
+
+    // מצב סריקת רקע לאייקונים
     let isFetchingIcons = false;
     let iconsModified = false;
 
@@ -54,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
         appContainer.classList.remove('hidden'); 
         repoNameSpan.textContent = `${githubUser}/${githubRepo}`; 
         loadWhitelistFromGitHub(); 
+        loadCfopuserCatalog(); // טעינת קטלוג CFOPUSER לחיפוש מהיר
     };
 
     const showLogin = () => { 
@@ -64,6 +68,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const showAccessDenied = () => { 
         hideAllScreens();
         accessDeniedContainer.classList.remove('hidden'); 
+    };
+
+    // --- טעינת מאגר CFOPUSER מראש עבור החיפוש ---
+    const loadCfopuserCatalog = async () => {
+        try {
+            const res = await fetch("https://raw.githubusercontent.com/cfopuser/app-store/main/apps.json");
+            if (res.ok) {
+                const appIds = await res.json();
+                const promises = appIds.map(async id => {
+                    try {
+                        const appRes = await fetch(`https://raw.githubusercontent.com/cfopuser/app-store/main/apps/${id}/app.json`);
+                        if (appRes.ok) {
+                            const data = await appRes.json();
+                            const meta = data.metadata || data;
+                            const assets = data.assets || {};
+                            let icon = assets.icon_url || "";
+                            if (icon && !icon.startsWith("http")) {
+                                icon = `https://raw.githubusercontent.com/cfopuser/app-store/main/${icon}`;
+                            }
+                            return {
+                                id: meta.package_name,
+                                title: meta.name_he || meta.name || id,
+                                title_en: meta.name || id,
+                                iconUrl: icon,
+                                source: 'CFOPUSER'
+                            };
+                        }
+                    } catch (e) { return null; }
+                });
+                const results = await Promise.all(promises);
+                cfopuserAppsCatalog = results.filter(Boolean);
+            }
+        } catch (e) {
+            console.warn("Failed to load CFOPUSER catalog", e);
+        }
     };
 
     // --- RENDER BOARD ---
@@ -103,11 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const displayName = appNames[idx] || pkg;
                     
                     let iconSrc = appIcons[pkg];
-                    // תיקון למסך שחור: תמיד נוודא שיש פרמטר גודל שמכריח את גוגל לרנדר את התמונה
                     if (iconSrc) {
                         iconSrc = iconSrc.split('=')[0] + '=w128-h128-rw';
                     } else {
-                        // אווטאר גיבוי במקרה שאין תמונה
                         iconSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName.charAt(0))}&background=e2e8f0&color=4f46e5&font-size=0.5&bold=true`;
                     }
                     
@@ -159,7 +196,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             categoriesBoardDiv.appendChild(catCol);
 
-            // תמיכה בגלילה אוטומטית בעת גרירה
             if (window.Sortable) {
                 new Sortable(dropzone, {
                     group: 'shared-categories',
@@ -197,16 +233,16 @@ document.addEventListener('DOMContentLoaded', () => {
             appNames.push(title);
             
             if (iconUrl) {
-                // שומרים את הקישור מנוקה
                 appIcons[pkg] = iconUrl.split('=')[0];
             }
             
+            // שיבוץ זמני בלוח עד לשמירה ומיון ה-AI
             const firstCat = Object.keys(categorizedData)[0] || "כללי";
             if (!categorizedData[firstCat]) categorizedData[firstCat] = [];
             categorizedData[firstCat].push(pkg);
 
             renderCategoriesBoard();
-            showStatus(`נוסף בהצלחה: ${title}`, false);
+            showStatus(`נוסף בהצלחה: ${title} (ייקוטלג אוטומטית בעת השמירה)`, false);
         } else {
             alert(`האפליקציה ${title} (${pkg}) כבר קיימת ברשימה.`);
         }
@@ -234,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- GITHUB API FUNCTIONS ---
+    // --- טעינת הנתונים מ-GitHub עם איחוד וסנכרון מלא ---
     const loadWhitelistFromGitHub = async () => {
         if (!githubUser || !githubRepo) return;
         showStatus('טוען נתונים מ-GitHub...', false);
@@ -273,12 +309,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 appIcons = JSON.parse(decodeUnicode(data.content));
             } else { iconsFileSHA = null; appIcons = {}; }
 
+            // 🚀 סנכרון קריטי: מוודא שכל אפליקציה שקיימת בקטגוריות נכללת ברשימת החבילות (מונע מחיקה של מטרוליסט!)
+            const allCategorizedPkgs = Object.values(categorizedData).flat();
+            allCategorizedPkgs.forEach(pkg => {
+                if (!authorizedApps.includes(pkg)) {
+                    authorizedApps.push(pkg);
+                    appNames.push(pkg);
+                }
+            });
+
             if (authorizedApps.length !== appNames.length) appNames = authorizedApps.map(pkg => pkg); 
 
             showStatus('הנתונים נטענו בהצלחה!', false);
             renderCategoriesBoard();
             
-            // מפעיל סריקה רק לאפליקציות שממש חסר להן מפתח באובייקט
             setTimeout(startBackgroundIconFetch, 2000);
             
         } catch (err) {
@@ -288,24 +332,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- BACKGROUND ICON FETCHING (USING YOUR VERCEL BACKEND) ---
     const startBackgroundIconFetch = async () => {
         if (isFetchingIcons) return;
-        
         const missingPkgs = authorizedApps.filter(pkg => !appIcons[pkg]);
         if (missingPkgs.length === 0) return;
         
         isFetchingIcons = true;
         iconsModified = false;
-        
-        console.log(`[Icon Scanner] מתחיל סריקה של ${missingPkgs.length} אפליקציות חסרות...`);
-        showStatus(`סורק איקונים חסרים... ⏳`, false, true);
 
         for (let i = 0; i < missingPkgs.length; i++) {
             const pkg = missingPkgs[i];
             let foundIcon = null;
-
-            showStatus(`סורק: ${pkg} (${missingPkgs.length - i} נותרו) ⏳`, false, true);
 
             try {
                 const res = await fetch(`/api/get-icon?pkg=${pkg}`);
@@ -315,39 +352,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         foundIcon = data.icon;
                     }
                 }
-            } catch (e) {
-                console.warn(`[Icon Scanner] שגיאת תקשורת מול השרת עבור ${pkg}`);
-            }
+            } catch (e) { }
 
             if (foundIcon) {
-                // תמיד חותכים ושומרים את הבסיס הנקי (הגודל מתווסף בתצוגה)
                 foundIcon = foundIcon.split('=')[0];
                 appIcons[pkg] = foundIcon;
                 iconsModified = true;
                 
-                // נרנדר את הלוח מחדש כדי שהתמונה תופיע מיד
                 const imgElement = document.querySelector(`.app-draggable-item[data-pkg="${pkg}"] .app-icon`);
                 if (imgElement) {
-                    imgElement.style.opacity = '0';
-                    setTimeout(() => {
-                        imgElement.src = foundIcon + '=w128-h128-rw';
-                        imgElement.style.transition = 'opacity 0.5s ease-in';
-                        imgElement.style.opacity = '1';
-                    }, 100);
+                    imgElement.src = foundIcon + '=w128-h128-rw';
                 }
             }
-
             await new Promise(r => setTimeout(r, 400));
         }
 
         isFetchingIcons = false;
-        
         if (iconsModified) {
-            showStatus('כל האייקונים נמשכו! שומר אוטומטית... 💾', false, true);
             await silentSaveIcons();
-            showStatus('האייקונים עודכנו ונשמרו בהצלחה! 🎉', false);
-        } else {
-            showStatus('סריקת הרקע הסתיימה.', false);
         }
     };
 
@@ -365,16 +387,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (data.content) iconsFileSHA = data.content.sha;
             iconsModified = false;
-        } catch (e) { 
-            console.error('[Icon Scanner] Failed to save icons', e); 
-        }
+        } catch (e) { }
     };
 
+    // --- שמירה עם מיון AI אוטומטי ---
     const saveWhitelistToGitHub = async () => {
-        if (!githubUser || !githubRepo || !githubToken) { 
-            showStatus('שגיאת התחברות.', true); 
-            return; 
-        }
+        if (!githubUser || !githubRepo || !githubToken) { showStatus('שגיאת התחברות.', true); return; }
         
         saveButton.disabled = true;
         const originalText = saveButton.innerText;
@@ -382,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showStatus('ה-AI סורק ומקטלג אפליקציות חדשות, אנא המתן... ⏳', false, true);
 
         try {
-            // 1. קריאה ל-API הקיים שלך (שממיין באמצעות Gemini ושומר ישירות ל-GitHub)
+            // 1. קריאה ל-API שממיין ומקטלג באמצעות Gemini
             const aiRes = await fetch('/api/categorize-and-save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -399,12 +417,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(aiData.error || 'שגיאה בקטלוג ה-AI');
             }
 
-            // עדכון הנתונים המקומיים לפי מה שה-AI סידר ושמר
             if (aiData.categories) {
                 categorizedData = aiData.categories;
             }
 
-            // 2. שמירת שאר הקבצים (רשימת השמות, החבילות והאייקונים)
+            // 2. שמירת יתר הקבצים
             const req = (file, content, sha, msg) => fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/${file}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
@@ -420,10 +437,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const res4 = await req('app-icons.json', appIcons, iconsFileSHA, 'Update app icons mapping');
             if (res4.content) iconsFileSHA = res4.content.sha;
 
-            // ציור מחדש של הלוח עם הקטלוג הנכון של ה-AI
             renderCategoriesBoard();
             showStatus('כל השינויים קוטלגו ע"י ה-AI ונשמרו בהצלחה ב-GitHub! 🎉', false);
-
         } catch (err) {
             console.error(err);
             showStatus(`שגיאה בשמירה: ${err.message}`, true);
@@ -433,71 +448,94 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- GOOGLE SEARCH API ---
+    // --- חיפוש חכם רב-ערוצי (CFOPUSER + Google Play + Direct ID) ---
     const searchApps = async () => { 
         const query = searchInput.value.trim(); 
-        if (query.length < 3) { 
+        if (query.length < 2) { 
             searchResultsDiv.style.display = 'none'; 
             searchSpinner.classList.add('hidden');
             return; 
         } 
         
         searchSpinner.classList.remove('hidden');
-        searchResultsDiv.style.display = 'none'; 
-        
+        searchResultsDiv.innerHTML = '';
+        searchResultsDiv.style.display = 'block';
+
+        const qLower = query.toLowerCase();
+        let resultsCount = 0;
+
+        // 1. ערוץ א': חיפוש במאגר של CFOPUSER (כולל MetroList, Meld, SealPlus וכו')
+        const cfopMatches = cfopuserAppsCatalog.filter(app => 
+            app.title.toLowerCase().includes(qLower) || 
+            app.title_en.toLowerCase().includes(qLower) || 
+            app.id.toLowerCase().includes(qLower)
+        );
+
+        cfopMatches.forEach(app => {
+            resultsCount++;
+            appendSearchResultItem(app.id, app.title, app.iconUrl, 'CFOPUSER');
+        });
+
+        // 2. ערוץ ב': זיהוי ישיר של Package Name
+        if (query.includes('.') && !query.includes(' ') && !cfopMatches.some(a => a.id === query)) {
+            resultsCount++;
+            appendSearchResultItem(query, query, '', 'ישיר');
+        }
+
+        // 3. ערוץ ג': חיפוש בגוגל פליי
         const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${SEARCH_ENGINE_ID}&q=${encodeURIComponent(query)}`; 
         try { 
             const res = await fetch(url); 
             const data = await res.json(); 
             if (data.items && data.items.length > 0) { 
-                displayGoogleResults(data.items); 
-            } else { 
-                searchResultsDiv.innerHTML = '<div style="padding: 15px; text-align: center; color: #64748b;">לא נמצאו תוצאות.</div>'; 
-                searchResultsDiv.style.display = 'block'; 
-            } 
-        } catch (err) { 
-            searchResultsDiv.innerHTML = '<div style="padding: 15px; text-align: center; color: #ef4444;">שגיאה בחיפוש.</div>'; 
-            searchResultsDiv.style.display = 'block'; 
-        } finally {
-            searchSpinner.classList.add('hidden');
+                data.items.forEach(app => {
+                    try {
+                        const u = new URL(app.link);
+                        const id = u.searchParams.get('id');
+                        if (!id) return;
+                        // הימנעות מכפילות אם כבר הוצג מ-CFOPUSER
+                        if (cfopMatches.some(m => m.id === id)) return;
+
+                        const title = app.title.split('-')[0].trim();
+                        let iconUrl = app.pagemap?.cse_image?.[0]?.src || '';
+                        if (iconUrl) iconUrl = iconUrl.split('=')[0] + '=w128-h128-rw';
+                        
+                        resultsCount++;
+                        appendSearchResultItem(id, title, iconUrl, 'Google Play');
+                    } catch (e) { }
+                });
+            }
+        } catch (err) { }
+
+        searchSpinner.classList.add('hidden');
+
+        if (resultsCount === 0) {
+            searchResultsDiv.innerHTML = '<div style="padding: 15px; text-align: center; color: #64748b;">לא נמצאו תוצאות.</div>';
         }
     };
 
-    const displayGoogleResults = (results) => {
-        searchResultsDiv.innerHTML = '';
-        results.forEach(app => {
-            try {
-                const url = new URL(app.link);
-                const id = url.searchParams.get('id');
-                if (!id) return;
-                
-                const title = app.title.split('-')[0].trim();
-                let iconUrl = app.pagemap?.cse_image?.[0]?.src || '';
-                
-                // תיקון למסך שחור גם בתוצאות החיפוש!
-                if (iconUrl) iconUrl = iconUrl.split('=')[0] + '=w128-h128-rw';
-                
-                const displayIcon = iconUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(title.charAt(0))}&background=e2e8f0&color=64748b&bold=true`;
-
-                const item = document.createElement('div');
-                item.className = 'search-result-item';
-                item.innerHTML = `
-                    <img src="${displayIcon}" class="search-result-icon" alt="${title}" loading="lazy" />
-                    <div class="app-info">
-                        <strong>${title}</strong>
-                        <small>${id}</small>
-                    </div>
-                    <button class="btn btn-primary" style="padding: 6px 14px; font-size: 13px;">הוסף</button>
-                `;
-                item.querySelector('button').addEventListener('click', () => {
-                    addApp(id, title, iconUrl);
-                    searchResultsDiv.style.display = 'none';
-                    searchInput.value = '';
-                });
-                searchResultsDiv.appendChild(item);
-            } catch (e) { }
+    const appendSearchResultItem = (pkg, title, iconUrl, sourceBadge) => {
+        const displayIcon = iconUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(title.charAt(0))}&background=e2e8f0&color=64748b&bold=true`;
+        
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+        item.innerHTML = `
+            <img src="${displayIcon}" class="search-result-icon" alt="${title}" loading="lazy" />
+            <div class="app-info" style="flex:1;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <strong>${title}</strong>
+                    <span style="font-size:11px; padding:2px 6px; border-radius:4px; background:${sourceBadge === 'CFOPUSER' ? '#f0fdf4; color:#16a34a; border:1px solid #bbf7d0;' : '#f1f5f9; color:#64748b;'} font-family:sans-serif;">${sourceBadge}</span>
+                </div>
+                <small>${pkg}</small>
+            </div>
+            <button class="btn btn-primary" style="padding: 6px 14px; font-size: 13px;">הוסף</button>
+        `;
+        item.querySelector('button').addEventListener('click', () => {
+            addApp(pkg, title, iconUrl);
+            searchResultsDiv.style.display = 'none';
+            searchInput.value = '';
         });
-        searchResultsDiv.style.display = 'block'; 
+        searchResultsDiv.appendChild(item);
     };
 
     // --- AUTHENTICATION ---
@@ -572,7 +610,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     searchInput.addEventListener('input', () => { 
         clearTimeout(debounceTimer); 
-        debounceTimer = setTimeout(searchApps, 600); 
+        debounceTimer = setTimeout(searchApps, 500); 
     });
     
     document.addEventListener('click', (event) => { 
