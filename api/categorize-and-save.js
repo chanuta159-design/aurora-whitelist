@@ -25,7 +25,7 @@ export default async function handler(request, response) {
             existingCategories = JSON.parse(decodedContent);
         }
 
-        // --- 2. סנכרון בטוח: איחוד כל האפליקציות המורשות (מונע מחיקה בטעות) ---
+        // --- 2. סנכרון בטוח: איחוד כל האפליקציות המורשות ---
         const allKnownApps = new Set([...authorizedApps, ...Object.values(existingCategories).flat()]);
         for (const cat in existingCategories) {
             existingCategories[cat] = existingCategories[cat].filter(pkg => allKnownApps.has(pkg));
@@ -66,7 +66,6 @@ export default async function handler(request, response) {
                     const cfopAppsRes = await fetch("https://raw.githubusercontent.com/cfopuser/app-store/main/apps.json");
                     if (cfopAppsRes.ok) {
                         const appIds = await cfopAppsRes.json();
-                        // הגבלה לחיפוש מהיר כדי למנוע timeout
                         const searchLimit = Math.min(appIds.length, 30);
                         for (let i = 0; i < searchLimit; i++) {
                             const appId = appIds[i];
@@ -95,7 +94,7 @@ export default async function handler(request, response) {
         });
         await Promise.all(scrapePromises);
 
-        // --- 5. שימוש במודל העדכני ביותר: gemini-3.8-flash ---
+        // --- 5. בחירת מודל: gemini-3.8-flash ---
         const selectedModel = 'gemini-3.8-flash';
         console.log(`[AI] Using Gemini Model: ${selectedModel}`);
 
@@ -134,9 +133,9 @@ ${scrapedAppsForPrompt.join('\n')}
             })
         });
 
-        // גיבוי למקרה שהמפתח שלך עדיין לא עודכן במערכת ל-3.8
+        // גיבוי ל-2.5 במקרה ש-3.8 אינו מופעל בחשבון זה
         if (!geminiResponse.ok && geminiResponse.status === 404) {
-            console.warn(`Model ${selectedModel} returned 404, falling back to gemini-2.5-flash`);
+            console.warn(`Model ${selectedModel} not found, trying gemini-2.5-flash`);
             geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -171,3 +170,43 @@ ${scrapedAppsForPrompt.join('\n')}
             console.error('[JSON Parse Error] Raw text was:', rawJsonText);
             throw new Error(`Failed to parse JSON from Gemini: ${parseErr.message}`);
         }
+
+        // --- 7. מיזוג ושמירה ב-GitHub ---
+        for (const [cat, pkgs] of Object.entries(newAiCategories)) {
+            if (!Array.isArray(pkgs)) continue;
+            if (!existingCategories[cat]) existingCategories[cat] = [];
+            
+            const fixedPkgs = pkgs.map(pkg => {
+                if (typeof pkg !== 'string') return '';
+                return pkg.replace(/^קום\./, 'com.')
+                          .replace(/^איל\./, 'il.')
+                          .replace(/^אורג\./, 'org.');
+            }).filter(Boolean);
+
+            existingCategories[cat].push(...fixedPkgs);
+            existingCategories[cat] = [...new Set(existingCategories[cat])];
+        }
+
+        await saveToGithub(existingCategories, currentSha, githubToken, githubUser, githubRepo, 'AI Auto-categorize new apps');
+        return response.status(200).json({ success: true, categories: existingCategories });
+
+    } catch (err) {
+        console.error('Error in categorization process:', err);
+        return response.status(500).json({ error: err.message });
+    }
+}
+
+async function saveToGithub(jsonObj, sha, token, user, repo, commitMessage) {
+    const fileUrl = `https://api.github.com/repos/${user}/${repo}/contents/categorized-whitelist.json`;
+    const contentBase64 = Buffer.from(JSON.stringify(jsonObj, null, 2)).toString('base64');
+    
+    const putRes = await fetch(fileUrl, {
+        method: 'PUT',
+        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: commitMessage, content: contentBase64, sha: sha || undefined })
+    });
+    if (!putRes.ok) {
+        const err = await putRes.json();
+        throw new Error(`GitHub save failed: ${err.message}`);
+    }
+}
