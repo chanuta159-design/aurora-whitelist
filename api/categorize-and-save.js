@@ -6,7 +6,7 @@ export default async function handler(request, response) {
     const { authorizedApps, githubToken, githubUser, githubRepo } = request.body;
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-    if (!GEMINI_API_KEY) return response.status(500).json({ error: 'Missing GEMINI_API_KEY' });
+    if (!GEMINI_API_KEY) return response.status(500).json({ error: 'Missing GEMINI_API_KEY in environment variables' });
     if (!githubToken || !authorizedApps) return response.status(400).json({ error: 'Missing parameters' });
 
     try {
@@ -63,11 +63,13 @@ export default async function handler(request, response) {
             // נסיון ב': אם לא קיים בגוגל - בדיקה במאגר CFOPUSER
             if (!foundInfo) {
                 try {
-                    // חיפוש שם האפליקציה במאגר CFOPUSER
                     const cfopAppsRes = await fetch("https://raw.githubusercontent.com/cfopuser/app-store/main/apps.json");
                     if (cfopAppsRes.ok) {
                         const appIds = await cfopAppsRes.json();
-                        for (const appId of appIds) {
+                        // הגבלה לחיפוש מהיר כדי למנוע timeout
+                        const searchLimit = Math.min(appIds.length, 30);
+                        for (let i = 0; i < searchLimit; i++) {
+                            const appId = appIds[i];
                             const appJsonRes = await fetch(`https://raw.githubusercontent.com/cfopuser/app-store/main/apps/${appId}/app.json`);
                             if (appJsonRes.ok) {
                                 const appJson = await appJsonRes.json();
@@ -94,20 +96,27 @@ export default async function handler(request, response) {
         await Promise.all(scrapePromises);
 
         // --- 5. מציאת מודל Gemini עדכני ---
-        let latestModel = 'gemini-1.5-flash'; 
+        let selectedModel = 'gemini-1.5-flash'; 
         try {
             const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`);
             const modelsData = await modelsRes.json();
+            
             if (modelsData.models) {
                 const flashModels = modelsData.models.filter(m => {
                     const name = m.name.toLowerCase();
                     return name.includes('flash') && !name.includes('exp') && m.supportedGenerationMethods?.includes('generateContent');
                 });
                 if (flashModels.length > 0) {
-                    latestModel = flashModels[flashModels.length - 1].name.replace('models/', '');
+                    selectedModel = flashModels[flashModels.length - 1].name.replace('models/', '');
                 }
+            } else if (modelsData.error) {
+                console.warn('[AI Models List Warning]', modelsData.error.message);
             }
-        } catch (e) { }
+        } catch (e) {
+            console.warn('Could not query models list, using fallback model:', selectedModel);
+        }
+
+        console.log(`[AI] Using Gemini Model: ${selectedModel}`);
 
         // --- 6. שאילתה ל-Gemini ---
         const existingCategoryNames = Object.keys(existingCategories).length > 0 
@@ -133,31 +142,59 @@ ${scrapedAppsForPrompt.join('\n')}
   "שם קטגוריה": ["package.name.1", "package.name.2"]
 }`;
 
-        const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${latestModel}:generateContent?key=${GEMINI_API_KEY}`, {
+        const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { responseMimeType: "application/json" }
+                generationConfig: { 
+                    responseMimeType: "application/json" 
+                }
             })
         });
 
         const geminiData = await geminiResponse.json();
-        const rawJsonText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
-        
-        if (!rawJsonText) throw new Error('Gemini failed to generate categories');
 
-        const newAiCategories = JSON.parse(rawJsonText);
+        // בדיקה מפורשת של שגיאות API מגוגל
+        if (!geminiResponse.ok || geminiData.error) {
+            const errMsg = geminiData.error?.message || `HTTP ${geminiResponse.status} ${geminiResponse.statusText}`;
+            console.error('[Gemini API Error Detail]:', JSON.stringify(geminiData));
+            throw new Error(`Gemini API error: ${errMsg}`);
+        }
+
+        const candidate = geminiData.candidates?.[0];
+        if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
+            console.warn(`[Gemini Finish Reason]: ${candidate.finishReason}`);
+        }
+
+        let rawJsonText = candidate?.content?.parts?.[0]?.text;
+        if (!rawJsonText) {
+            console.error('[Gemini Empty Response]:', JSON.stringify(geminiData));
+            throw new Error('Gemini returned an empty response or was blocked by safety filters');
+        }
+
+        // ניקוי עטיפת markdown במידה והוחזרה
+        rawJsonText = rawJsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+        let newAiCategories;
+        try {
+            newAiCategories = JSON.parse(rawJsonText);
+        } catch (parseErr) {
+            console.error('[JSON Parse Error] Raw text was:', rawJsonText);
+            throw new Error(`Failed to parse JSON from Gemini: ${parseErr.message}`);
+        }
 
         // --- 7. מיזוג ושמירה ב-GitHub ---
         for (const [cat, pkgs] of Object.entries(newAiCategories)) {
+            if (!Array.isArray(pkgs)) continue;
             if (!existingCategories[cat]) existingCategories[cat] = [];
             
             const fixedPkgs = pkgs.map(pkg => {
+                if (typeof pkg !== 'string') return '';
                 return pkg.replace(/^קום\./, 'com.')
                           .replace(/^איל\./, 'il.')
                           .replace(/^אורג\./, 'org.');
-            });
+            }).filter(Boolean);
 
             existingCategories[cat].push(...fixedPkgs);
             existingCategories[cat] = [...new Set(existingCategories[cat])];
@@ -167,7 +204,7 @@ ${scrapedAppsForPrompt.join('\n')}
         return response.status(200).json({ success: true, categories: existingCategories });
 
     } catch (err) {
-        console.error('Error in categorization:', err);
+        console.error('Error in categorization process:', err);
         return response.status(500).json({ error: err.message });
     }
 }
