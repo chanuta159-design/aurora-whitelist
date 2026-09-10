@@ -1,21 +1,5 @@
 [
   {
-    "packageName": "com.sidduron.siduronandroid",
-    "title": "סידורון - סידור וחומש חכם",
-    "iconUrl": "https://play-lh.googleusercontent.com/hUhbJBh3DZUvr9rY_JixUDfS3pO63Mqs9p9_-QQRqGLkfCmxBEeSDbb_9-g2aFYdvzxHSN-M6CxbrKHx27DnjA",
-    "requestCount": 1,
-    "firstRequestedAt": "2026-09-10T16:55:39.406Z",
-    "lastRequestedAt": "2026-09-10T16:55:39.406Z"
-  },
-  {
-    "packageName": "com.harav",
-    "title": "סידור קול אליהו",
-    "iconUrl": "https://play-lh.googleusercontent.com/KNlaJmG8JL4rOBgouyhLsJ7uHQMNToG7W9-ohvgKnNVTi75q_8NXrwT0DyzkiHebzeQDaiwaSY10vVAneNJh",
-    "requestCount": 1,
-    "firstRequestedAt": "2026-09-10T16:55:39.406Z",
-    "lastRequestedAt": "2026-09-10T16:55:39.406Z"
-  },
-  {
     "packageName": "com.issahar.tiklal",
     "title": "תכלאל – סידור תימני בלדי",
     "iconUrl": "https://play-lh.googleusercontent.com/TKLn1yAZt9VZzQhSDsyTtgjHu2tK9Sqb_Jd2QVbjQQJZBfubcIv03Qk_Yz-3lM01GNUCykE2hPyMnOKxWfE1usg",
