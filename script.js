@@ -9,13 +9,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let appNames = [];
     let appIcons = {}; 
     let categorizedData = {};
-    let catFileSHA = null, fileSHA = null, namesFileSHA = null, iconsFileSHA = null;
+    let pendingRequests = [];
+
+    let catFileSHA = null, fileSHA = null, namesFileSHA = null, iconsFileSHA = null, requestsFileSHA = null;
     let debounceTimer, githubToken = null, githubUser = '', githubRepo = '';
     
-    // קטלוג האפליקציות של CFOPUSER לחיפוש מהיר
     let cfopuserAppsCatalog = [];
-
-    // מצב סריקת רקע לאייקונים
     let isFetchingIcons = false;
     let iconsModified = false;
 
@@ -39,6 +38,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const deniedLogoutButton = document.getElementById('deniedLogoutButton');
     const loginButton = document.getElementById('loginButton');
     const statusMessage = document.getElementById('statusMessage');
+    
+    const pendingRequestsSection = document.getElementById('pendingRequestsSection');
+    const pendingRequestsList = document.getElementById('pendingRequestsList');
+    const requestsCountBadge = document.getElementById('requestsCountBadge');
 
     // --- API CREDENTIALS ---
     const GOOGLE_API_KEY = 'AIzaSyD3YjTEIwAnBBIV7LzuRcQVHmTTB27og9o';
@@ -57,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         appContainer.classList.remove('hidden'); 
         repoNameSpan.textContent = `${githubUser}/${githubRepo}`; 
         loadWhitelistFromGitHub(); 
-        loadCfopuserCatalog(); // טעינת קטלוג CFOPUSER לחיפוש מהיר
+        loadCfopuserCatalog();
     };
 
     const showLogin = () => { 
@@ -70,7 +73,6 @@ document.addEventListener('DOMContentLoaded', () => {
         accessDeniedContainer.classList.remove('hidden'); 
     };
 
-    // --- טעינת מאגר CFOPUSER מראש עבור החיפוש ---
     const loadCfopuserCatalog = async () => {
         try {
             const res = await fetch("https://raw.githubusercontent.com/cfopuser/app-store/main/apps.json");
@@ -103,6 +105,66 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             console.warn("Failed to load CFOPUSER catalog", e);
         }
+    };
+
+    // --- RENDER PENDING REQUESTS ---
+    const renderPendingRequests = () => {
+        if (!pendingRequestsSection || !pendingRequestsList) return;
+
+        if (pendingRequests.length === 0) {
+            pendingRequestsSection.classList.add('hidden');
+            return;
+        }
+
+        pendingRequestsSection.classList.remove('hidden');
+        requestsCountBadge.textContent = pendingRequests.length;
+        pendingRequestsList.innerHTML = '';
+
+        // מיון לפי כמות בקשות יורדת
+        const sorted = [...pendingRequests].sort((a, b) => (b.requestCount || 1) - (a.requestCount || 1));
+
+        sorted.forEach(req => {
+            const card = document.createElement('div');
+            card.className = 'request-card';
+            
+            const count = req.requestCount || 1;
+            const displayName = req.title || req.packageName;
+            let iconSrc = req.iconUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName.charAt(0))}&background=e2e8f0&color=4f46e5&bold=true`;
+
+            card.innerHTML = `
+                <div class="request-card-info">
+                    <img src="${iconSrc}" class="app-icon" alt="${displayName}" loading="lazy" />
+                    <div class="app-info" title="${displayName}\n${req.packageName}">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <strong>${displayName}</strong>
+                            <span class="request-counter">🔥 ${count} ${count > 1 ? 'בקשות' : 'בקשה'}</span>
+                        </div>
+                        <small>${req.packageName}</small>
+                    </div>
+                </div>
+                <div class="request-actions">
+                    <button class="btn-sm-approve">אשר והוסף</button>
+                    <button class="btn-sm-reject" title="דחה בקשה">דחה</button>
+                </div>
+            `;
+
+            card.querySelector('.btn-sm-approve').addEventListener('click', () => {
+                addApp(req.packageName, displayName, req.iconUrl);
+                pendingRequests = pendingRequests.filter(r => r.packageName !== req.packageName);
+                renderPendingRequests();
+                showStatus(`האפליקציה ${displayName} אושרה ונוספה ללוח! זכור לשמור שינויים.`, false);
+            });
+
+            card.querySelector('.btn-sm-reject').addEventListener('click', () => {
+                if (confirm(`האם לדחות את הבקשה עבור ${displayName} (${req.packageName})?`)) {
+                    pendingRequests = pendingRequests.filter(r => r.packageName !== req.packageName);
+                    renderPendingRequests();
+                    showStatus(`הבקשה עבור ${displayName} נדחתה. זכור לשמור שינויים.`, false);
+                }
+            });
+
+            pendingRequestsList.appendChild(card);
+        });
     };
 
     // --- RENDER BOARD ---
@@ -236,7 +298,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 appIcons[pkg] = iconUrl.split('=')[0];
             }
             
-            // שיבוץ זמני בלוח עד לשמירה ומיון ה-AI
             const firstCat = Object.keys(categorizedData)[0] || "כללי";
             if (!categorizedData[firstCat]) categorizedData[firstCat] = [];
             categorizedData[firstCat].push(pkg);
@@ -270,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- טעינת הנתונים מ-GitHub עם איחוד וסנכרון מלא ---
+    // --- טעינת הנתונים מ-GitHub ---
     const loadWhitelistFromGitHub = async () => {
         if (!githubUser || !githubRepo) return;
         showStatus('טוען נתונים מ-GitHub...', false);
@@ -278,11 +339,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const headers = { 'Authorization': `token ${githubToken}` };
         try {
-            const [packageRes, namesRes, catRes, iconsRes] = await Promise.all([
+            const [packageRes, namesRes, catRes, iconsRes, requestsRes] = await Promise.all([
                 fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/whitelist.json`, { headers }),
                 fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-names.json`, { headers }),
                 fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/categorized-whitelist.json`, { headers }),
-                fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-icons.json`, { headers }).catch(() => ({ ok: false }))
+                fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-icons.json`, { headers }).catch(() => ({ ok: false })),
+                fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/pending-requests.json`, { headers }).catch(() => ({ ok: false }))
             ]);
 
             if (packageRes.ok) {
@@ -309,7 +371,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 appIcons = JSON.parse(decodeUnicode(data.content));
             } else { iconsFileSHA = null; appIcons = {}; }
 
-            // 🚀 סנכרון קריטי: מוודא שכל אפליקציה שקיימת בקטגוריות נכללת ברשימת החבילות (מונע מחיקה של מטרוליסט!)
+            if (requestsRes.ok) {
+                const data = await requestsRes.json();
+                requestsFileSHA = data.sha;
+                pendingRequests = JSON.parse(decodeUnicode(data.content));
+            } else { requestsFileSHA = null; pendingRequests = []; }
+
             const allCategorizedPkgs = Object.values(categorizedData).flat();
             allCategorizedPkgs.forEach(pkg => {
                 if (!authorizedApps.includes(pkg)) {
@@ -321,6 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (authorizedApps.length !== appNames.length) appNames = authorizedApps.map(pkg => pkg); 
 
             showStatus('הנתונים נטענו בהצלחה!', false);
+            renderPendingRequests();
             renderCategoriesBoard();
             
             setTimeout(startBackgroundIconFetch, 2000);
@@ -400,7 +468,6 @@ document.addEventListener('DOMContentLoaded', () => {
         showStatus('ה-AI סורק ומקטלג אפליקציות חדשות, אנא המתן... ⏳', false, true);
 
         try {
-            // 1. קריאה ל-API שממיין ומקטלג באמצעות Gemini
             const aiRes = await fetch('/api/categorize-and-save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -421,7 +488,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 categorizedData = aiData.categories;
             }
 
-            // 2. שמירת יתר הקבצים
             const req = (file, content, sha, msg) => fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/${file}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
@@ -437,8 +503,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const res4 = await req('app-icons.json', appIcons, iconsFileSHA, 'Update app icons mapping');
             if (res4.content) iconsFileSHA = res4.content.sha;
 
+            const res5 = await req('pending-requests.json', pendingRequests, requestsFileSHA, 'Sync pending requests');
+            if (res5.content) requestsFileSHA = res5.content.sha;
+
+            renderPendingRequests();
             renderCategoriesBoard();
-            showStatus('כל השינויים קוטלגו ע"י ה-AI ונשמרו בהצלחה ב-GitHub! 🎉', false);
+            showStatus('כל השינויים והבקשות נשמרו בהצלחה ב-GitHub! 🎉', false);
         } catch (err) {
             console.error(err);
             showStatus(`שגיאה בשמירה: ${err.message}`, true);
@@ -448,7 +518,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- חיפוש חכם רב-ערוצי (CFOPUSER + Google Play + Direct ID) ---
+    // --- חיפוש רב-ערוצי ---
     const searchApps = async () => { 
         const query = searchInput.value.trim(); 
         if (query.length < 2) { 
@@ -464,7 +534,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const qLower = query.toLowerCase();
         let resultsCount = 0;
 
-        // 1. ערוץ א': חיפוש במאגר של CFOPUSER (כולל MetroList, Meld, SealPlus וכו')
         const cfopMatches = cfopuserAppsCatalog.filter(app => 
             app.title.toLowerCase().includes(qLower) || 
             app.title_en.toLowerCase().includes(qLower) || 
@@ -476,13 +545,11 @@ document.addEventListener('DOMContentLoaded', () => {
             appendSearchResultItem(app.id, app.title, app.iconUrl, 'CFOPUSER');
         });
 
-        // 2. ערוץ ב': זיהוי ישיר של Package Name
         if (query.includes('.') && !query.includes(' ') && !cfopMatches.some(a => a.id === query)) {
             resultsCount++;
             appendSearchResultItem(query, query, '', 'ישיר');
         }
 
-        // 3. ערוץ ג': חיפוש בגוגל פליי
         const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${SEARCH_ENGINE_ID}&q=${encodeURIComponent(query)}`; 
         try { 
             const res = await fetch(url); 
@@ -493,7 +560,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         const u = new URL(app.link);
                         const id = u.searchParams.get('id');
                         if (!id) return;
-                        // הימנעות מכפילות אם כבר הוצג מ-CFOPUSER
                         if (cfopMatches.some(m => m.id === id)) return;
 
                         const title = app.title.split('-')[0].trim();
@@ -590,7 +656,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- EVENT LISTENERS ---
     loginButton.addEventListener('click', handleLogin);
     logoutButton.addEventListener('click', handleLogout);
     deniedLogoutButton.addEventListener('click', handleLogout);
