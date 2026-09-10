@@ -24,7 +24,8 @@
     "com.siddurhayom.app",
     "com.issahar.tiklal",
     "com.maatayim.koren",
-    "com.ozvehadar.sfard"
+    "com.ozvehadar.sfard",
+    "appinventor.ai_yonimixx.Siduron"
   ],
   "תחבורה, רכב וניווט": [
     "com.waze",
@@ -100,7 +101,8 @@
     "com.bork.dsp.datuna",
     "com.google.android.apps.photos",
     "com.adsk.sketchbook",
-    "com.spotify.music"
+    "com.spotify.music",
+    "com.oceanwing.soundcore"
   ],
   "צבא": [
     "il.idf.doch1",
