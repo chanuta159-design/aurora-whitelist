@@ -1,26 +1,10 @@
 [
   {
-    "packageName": "appinventor.ai_yonimixx.Siduron",
-    "title": "סידור - עדות המזרח אשכנז וספרד",
-    "iconUrl": "https://play-lh.googleusercontent.com/kHNb-si3ph3qTSCSts1EJ0RvS6Z25KT5KdWq1DvQlMCQk-Cx0C7cLXNC-fPH4UOI5RYR9NMh8tb_-bv4w4dzgw",
-    "requestCount": 1,
-    "firstRequestedAt": "2026-09-10T16:55:39.406Z",
-    "lastRequestedAt": "2026-09-10T16:55:39.406Z"
-  },
-  {
     "packageName": "com.siddur.app",
     "title": "סידור, תהילים, חוק לישראל",
     "iconUrl": "https://play-lh.googleusercontent.com/qiZ7zc-cMprvdbpLdzITJMpKhZkBMeiGy7ePqwctZWj_HV2mFHRMjBofQT4yG3hQtdEKdphfp6mJ5J7QxUgpyw",
     "requestCount": 1,
     "firstRequestedAt": "2026-09-10T16:55:39.406Z",
     "lastRequestedAt": "2026-09-10T16:55:39.406Z"
-  },
-  {
-    "packageName": "com.oceanwing.soundcore",
-    "title": "Anker soundcore",
-    "iconUrl": "https://play-lh.googleusercontent.com/rZlglOnm-g2pTEmgVRS7R_VeUmXcIhB02xTgNjszyre7ZPtGCnmg_PQkdtyP0MtFMGhq6wPzrGsgCpgOtLq8_to",
-    "requestCount": 1,
-    "firstRequestedAt": "2026-09-10T18:38:32.013Z",
-    "lastRequestedAt": "2026-09-10T18:38:32.013Z"
   }
 ]
