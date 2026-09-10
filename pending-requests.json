@@ -1,37 +1,5 @@
 [
   {
-    "packageName": "com.issahar.tiklal",
-    "title": "תכלאל – סידור תימני בלדי",
-    "iconUrl": "https://play-lh.googleusercontent.com/TKLn1yAZt9VZzQhSDsyTtgjHu2tK9Sqb_Jd2QVbjQQJZBfubcIv03Qk_Yz-3lM01GNUCykE2hPyMnOKxWfE1usg",
-    "requestCount": 1,
-    "firstRequestedAt": "2026-09-10T16:55:39.406Z",
-    "lastRequestedAt": "2026-09-10T16:55:39.406Z"
-  },
-  {
-    "packageName": "com.ozvehadar.sfard",
-    "title": "סידור עוז והדר ספרד",
-    "iconUrl": "https://play-lh.googleusercontent.com/Uw0TcK2E7YRklvrzvpxAX3MnZiGIpRGQV3lr27YkUo1OxPbtOhG1-N6yNnGQ2578iHeV6_uhRrFHu3sD3jyTyg",
-    "requestCount": 1,
-    "firstRequestedAt": "2026-09-10T16:55:39.406Z",
-    "lastRequestedAt": "2026-09-10T16:55:39.406Z"
-  },
-  {
-    "packageName": "com.siddurhayom.app",
-    "title": "סידור היום",
-    "iconUrl": "https://play-lh.googleusercontent.com/YaeaHmIFVYNYY4TsZ9fb0T9Qb-W0Nhdqm9j_yPnAf-zNP8OJ2FpqHsgwZRDdf32ZMKYcNf_YfIm8N4KOvkf04w",
-    "requestCount": 1,
-    "firstRequestedAt": "2026-09-10T16:55:39.406Z",
-    "lastRequestedAt": "2026-09-10T16:55:39.406Z"
-  },
-  {
-    "packageName": "com.maatayim.koren",
-    "title": "יישומון התפילה קורן",
-    "iconUrl": "https://play-lh.googleusercontent.com/OHpRCxFb1VeyibkCaATyfvF3EPObHb6Ul3oFvdRisU0Y9T24XE2kt4kVvtNIeCm8K1CG0Za9ftoiOaXYZwS7tg",
-    "requestCount": 1,
-    "firstRequestedAt": "2026-09-10T16:55:39.406Z",
-    "lastRequestedAt": "2026-09-10T16:55:39.406Z"
-  },
-  {
     "packageName": "appinventor.ai_yonimixx.Siduron",
     "title": "סידור - עדות המזרח אשכנז וספרד",
     "iconUrl": "https://play-lh.googleusercontent.com/kHNb-si3ph3qTSCSts1EJ0RvS6Z25KT5KdWq1DvQlMCQk-Cx0C7cLXNC-fPH4UOI5RYR9NMh8tb_-bv4w4dzgw",
