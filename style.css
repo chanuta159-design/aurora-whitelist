@@ -219,3 +219,103 @@ input[type="text"]:focus { outline: none; border-color: var(--primary-color); ba
 .search-result-item button { margin-right: auto; }
 /* עיצוב לאלמנט שנגרר באוויר */
 .sortable-fallback { opacity: 1 !important; cursor: grabbing !important; box-shadow: var(--shadow-lg) !important; z-index: 9999 !important; }
+/* --- אזור בקשות ממתינות --- */
+.requests-section {
+    background: var(--surface-color);
+    padding: 25px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 30px;
+    border: 1px solid var(--border-color);
+}
+
+.requests-badge {
+    background-color: #fef2f2;
+    color: var(--danger-color);
+    border: 1px solid #fecaca;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: var(--radius-pill);
+}
+
+.requests-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.request-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.request-card:hover {
+    box-shadow: var(--shadow-sm);
+    background: var(--surface-color);
+}
+
+.request-card-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow: hidden;
+}
+
+.request-counter {
+    background: #e0e7ff;
+    color: var(--primary-color);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.request-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.btn-sm-approve {
+    background-color: var(--success-color);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-sm-approve:hover {
+    background-color: #059669;
+}
+
+.btn-sm-reject {
+    background-color: transparent;
+    color: #94a3b8;
+    border: 1px solid var(--border-color);
+    padding: 6px 10px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-sm-reject:hover {
+    background-color: #fef2f2;
+    color: var(--danger-color);
+    border-color: #fecaca;
+}
