@@ -26,6 +26,18 @@
             </header>
             
             <main class="main-content">
+                <!-- אזור בקשות ממתינות מהמשתמשים -->
+                <section id="pendingRequestsSection" class="requests-section hidden">
+                    <div class="section-header">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <h2>בקשות ממתינות לאישור</h2>
+                            <span id="requestsCountBadge" class="requests-badge">0</span>
+                        </div>
+                    </div>
+                    <p class="section-subtitle">אפליקציות שהמשתמשים ביקשו להוסיף. לחיצה על "אשר והוסף" תעביר אותן ישירות ללוח הקטגוריות.</p>
+                    <div id="pendingRequestsList" class="requests-grid"></div>
+                </section>
+                
                 <!-- אזור חיפוש -->
                 <section class="search-section">
                     <h2>חיפוש אפליקציה חדשה מגוגל פליי</h2>
