@@ -12,5 +12,19 @@
     "repo": "chanuta159-design/mishnat",
     "lastUpdated": "2026-09-17T06:24:30.870Z",
     "addedAt": "2026-09-17T06:24:30.870Z"
+  },
+  {
+    "packageName": "com.app.mishnat",
+    "name": "משנת יוסף",
+    "name_en": "משנת יוסף",
+    "category": "כלים",
+    "description": "אפליקציה עצמאית שהועלתה לחנות",
+    "iconUrl": "",
+    "downloadUrl": "https://github.com/chanuta159-design/mishnat/releases/download/1.0/mishnatyosef.apk",
+    "size": 5937244,
+    "versionName": "1.0",
+    "repo": "chanuta159-design/mishnat",
+    "lastUpdated": "2026-09-17T06:30:01.272Z",
+    "addedAt": "2026-09-17T06:30:01.272Z"
   }
 ]
