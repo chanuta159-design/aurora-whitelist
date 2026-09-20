@@ -30,7 +30,6 @@ export default async function handler(request, response) {
         'User-Agent': 'AuroraStore-AppRegistrationService'
     };
 
-    // פונקציות עזר לשליפה ושמירה ב-GitHub
     const fetchFile = async (filename) => {
         try {
             const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${filename}`, { headers });
@@ -64,9 +63,8 @@ export default async function handler(request, response) {
     };
 
     try {
-        // 1. קריאת הקבצים הרלוונטיים מ-GitHub
-        const [customAppsFile, whitelistFile, namesFile, iconsFile, catFile, requestsFile] = await Promise.all([
-            fetchFile('custom-apps.json'),
+        const [sourcesFile, whitelistFile, namesFile, iconsFile, catFile, requestsFile] = await Promise.all([
+            fetchFile('app-sources.json'),
             fetchFile('whitelist.json'),
             fetchFile('app-names.json'),
             fetchFile('app-icons.json'),
@@ -74,22 +72,23 @@ export default async function handler(request, response) {
             fetchFile('pending-requests.json')
         ]);
 
-        let customApps = customAppsFile.content || [];
+        let appSources = sourcesFile.content || [];
         let whitelist = whitelistFile.content || [];
         let appNames = namesFile.content || [];
         let appIcons = iconsFile.content || {};
         let categorized = catFile.content || { "כללי": [] };
         let pendingRequests = requestsFile.content || [];
 
-        // 2. עדכון custom-apps.json
-        const existingCustomIdx = customApps.findIndex(a => a.packageName === pkg);
-        const appRecord = {
+        // 1. עדכון ברשימת המקורות המאוחדת כ-CUSTOM
+        const existingSourceIdx = appSources.findIndex(a => a.packageName === pkg);
+        const sourceRecord = {
             packageName: pkg,
+            source: 'CUSTOM',
             name: appTitle,
             name_en: manifest.name_en || appTitle,
             category: appCategory,
             description: appDesc,
-            iconUrl: iconUrl || (existingCustomIdx > -1 ? customApps[existingCustomIdx].iconUrl : ''),
+            iconUrl: iconUrl || (existingSourceIdx > -1 ? appSources[existingSourceIdx].iconUrl : ''),
             downloadUrl: apkUrl,
             size: Number(apkSize) || 0,
             versionName: version ? version.replace(/^v/, '') : '1.0.0',
@@ -97,14 +96,14 @@ export default async function handler(request, response) {
             lastUpdated: now
         };
 
-        if (existingCustomIdx > -1) {
-            customApps[existingCustomIdx] = { ...customApps[existingCustomIdx], ...appRecord };
+        if (existingSourceIdx > -1) {
+            appSources[existingSourceIdx] = { ...appSources[existingSourceIdx], ...sourceRecord };
         } else {
-            appRecord.addedAt = now;
-            customApps.push(appRecord);
+            sourceRecord.addedAt = now;
+            appSources.push(sourceRecord);
         }
 
-        // 3. עדכון whitelist.json ו-app-names.json
+        // 2. עדכון whitelist.json ו-app-names.json
         const wlIndex = whitelist.indexOf(pkg);
         if (wlIndex === -1) {
             whitelist.push(pkg);
@@ -113,12 +112,12 @@ export default async function handler(request, response) {
             appNames[wlIndex] = appTitle;
         }
 
-        // 4. עדכון app-icons.json
+        // 3. עדכון app-icons.json
         if (iconUrl) {
             appIcons[pkg] = iconUrl;
         }
 
-        // 5. עדכון categorized-whitelist.json
+        // 4. עדכון categorized-whitelist.json
         const allCategorizedPkgs = new Set(Object.values(categorized).flat());
         if (!allCategorizedPkgs.has(pkg)) {
             if (!categorized[appCategory]) {
@@ -127,12 +126,12 @@ export default async function handler(request, response) {
             categorized[appCategory].push(pkg);
         }
 
-        // 6. ניקוי מ-pending-requests.json אם היה קיים
+        // 5. ניקוי מ-pending-requests.json אם היה קיים
         const initialReqCount = pendingRequests.length;
         pendingRequests = pendingRequests.filter(r => r.packageName !== pkg);
 
-        // 7. שמירת השינויים ב-GitHub
-        await saveFile('custom-apps.json', customApps, customAppsFile.sha, `Register custom app: ${appTitle} (${pkg})`);
+        // 6. שמירת כל הקבצים ב-GitHub
+        await saveFile('app-sources.json', appSources, sourcesFile.sha, `Update unified app source: ${appTitle} (${pkg})`);
         await saveFile('whitelist.json', whitelist, whitelistFile.sha, `Whitelist custom app: ${pkg}`);
         await saveFile('app-names.json', appNames, namesFile.sha, `Update name for: ${pkg}`);
         if (iconUrl) {
@@ -145,12 +144,12 @@ export default async function handler(request, response) {
 
         return response.status(200).json({
             success: true,
-            message: `App ${appTitle} registered and whitelisted successfully!`,
-            app: appRecord
+            message: `App ${appTitle} registered in unified sources successfully!`,
+            app: sourceRecord
         });
 
     } catch (error) {
-        console.error('Error registering custom app:', error);
+        console.error('Error registering app source:', error);
         return response.status(500).json({ error: error.message });
     }
 }
