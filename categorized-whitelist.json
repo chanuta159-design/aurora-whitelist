@@ -104,7 +104,8 @@
     "com.google.android.apps.photos",
     "com.adsk.sketchbook",
     "com.spotify.music",
-    "com.oceanwing.soundcore"
+    "com.oceanwing.soundcore",
+    "com.google.android.apps.chromecast.app"
   ],
   "צבא": [
     "il.idf.doch1",
