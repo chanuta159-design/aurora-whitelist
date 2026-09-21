@@ -61,6 +61,34 @@
                         </button>
                     </div>
                     <p class="section-subtitle">גרור ושחרר אפליקציות בין הקטגוריות השונות.</p>
+                    <!-- לוח הקטגוריות -->
+                <section class="categories-section">
+                    <div class="section-header">
+                        <h2>סידור אפליקציות וקטגוריות</h2>
+                        <button id="addCategoryBtn" type="button" class="btn btn-outline">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"></path></svg>
+                            קטגוריה חדשה
+                        </button>
+                    </div>
+                    <p class="section-subtitle">גרור ושחרר אפליקציות בין הקטגוריות השונות.</p>
+
+                    <!-- 👇 הוסף כאן את אזור האפליקציות הממתינות לשיבוץ 👇 -->
+                    <div id="uncategorizedSection" class="uncategorized-section hidden">
+                        <div class="uncategorized-header">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span style="font-size: 20px;">📦</span>
+                                <h3>אפליקציות ממתינות לשיבוץ (<span id="uncategorizedCount">0</span>)</h3>
+                            </div>
+                            <button id="autoCategorizeBtn" type="button" class="btn btn-outline" style="font-size: 13px; padding: 6px 14px;">
+                                🪄 קטלג עם AI
+                            </button>
+                        </div>
+                        <p class="section-subtitle" style="margin-bottom:12px;">אפליקציות שנוספו וטרם שובצו לקטגוריה. גרור אותן ישירות לאחת הקטגוריות למטה:</p>
+                        <div id="uncategorizedDropzone" class="uncategorized-dropzone apps-dropzone"></div>
+                    </div>
+
+                    <div id="categoriesBoard" class="categories-board-grid"></div>
+                </section>
                     <div id="categoriesBoard" class="categories-board-grid"></div>
                 </section>
             </main>
