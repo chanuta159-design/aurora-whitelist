@@ -26,7 +26,7 @@ export default async function handler(request, response) {
         }
 
         // --- 2. סנכרון בטוח: איחוד כל האפליקציות המורשות ---
-        const allKnownApps = new Set([...authorizedApps, ...Object.values(existingCategories).flat()]);
+        const allKnownApps = new Set(authorizedApps);
         for (const cat in existingCategories) {
             existingCategories[cat] = existingCategories[cat].filter(pkg => allKnownApps.has(pkg));
             if (existingCategories[cat].length === 0) delete existingCategories[cat];
