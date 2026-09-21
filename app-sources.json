@@ -24,13 +24,13 @@
     "source": "CUSTOM",
     "name": "משנת יוסף",
     "name_en": "משנת יוסף",
-    "category": "כלים",
-    "description": "אפליקציה עצמאית שהועלתה לחנות",
+    "category": "",
+    "description": "הנחיה ל-AI: אנא צור תיאור קצר, תמציתי ומדויק בעברית (2-3 משפטים) עבור אפליקציה זו בהתבסס על שמה ומזהה החבילה שלה.",
     "iconUrl": "https://raw.githubusercontent.com/chanuta159-design/mishnat/main/icon.png",
     "downloadUrl": "https://github.com/chanuta159-design/mishnat/releases/download/1.0/mishnatyosef.apk",
     "size": 5937244,
     "versionName": "1.0",
     "repo": "chanuta159-design/mishnat",
-    "lastUpdated": "2026-09-21T20:10:31.844Z"
+    "lastUpdated": "2026-09-21T21:52:55.594Z"
   }
 ]
