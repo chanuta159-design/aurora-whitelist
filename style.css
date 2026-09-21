@@ -117,12 +117,25 @@ input[type="text"]:focus { outline: none; border-color: var(--primary-color); ba
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* --- לוח קטגוריות Masonry (לבני לגו אסימטרי) --- */
+/* --- לוח קטגוריות Masonry - מתיחה מלאה ל-100% רוחב --- */
 .categories-board-grid {
-    display: block;         /* ביטול ה-Grid הישן */
-    column-width: 320px;    /* רוחב כל עמודת לגו */
-    column-gap: 20px;       /* מרווח אופקי בין טורים */
+    display: block;
+    column-count: 3;        /* תמיד 3 טורים שנמתחים מקצה לקצה ללא שטחים ריקים */
+    column-gap: 24px;       /* מרווח יפה בין הטורים */
     width: 100%;
+}
+
+/* רספונסיביות: במסכים בינוניים נרד ל-2 טורים, ובנייד לטור 1 */
+@media (max-width: 1100px) {
+    .categories-board-grid {
+        column-count: 2;
+    }
+}
+
+@media (max-width: 768px) {
+    .categories-board-grid {
+        column-count: 1;
+    }
 }
 
 .category-column {
