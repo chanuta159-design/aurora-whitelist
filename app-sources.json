@@ -26,7 +26,7 @@
     "name_en": "משנת יוסף",
     "category": "כלים",
     "description": "אפליקציה עצמאית שהועלתה לחנות",
-    "iconUrl": "https://github.com/chanuta159-design/mishnat/releases/download/1.0/icon.png",
+    "iconUrl": "https://raw.githubusercontent.com/chanuta159-design/mishnat/main/icon.png",
     "downloadUrl": "https://github.com/chanuta159-design/mishnat/releases/download/1.0/mishnatyosef.apk",
     "size": 5937244,
     "versionName": "1.0",
