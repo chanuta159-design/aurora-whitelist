@@ -205,7 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     let iconSrc = appIcons[pkg];
                     if (iconSrc) {
-                        iconSrc = iconSrc.split('=')[0] + '=w128-h128-rw';
+                        // מוסיפים סיומת שינוי גודל אך ורק לתמונות שרת של Google Play
+                        if (iconSrc.includes('googleusercontent.com')) {
+                            iconSrc = iconSrc.split('=')[0] + '=w128-h128-rw';
+                        }
                     } else {
                         iconSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName.charAt(0))}&background=e2e8f0&color=4f46e5&font-size=0.5&bold=true`;
                     }
