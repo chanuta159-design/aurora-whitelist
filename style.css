@@ -344,3 +344,32 @@ input[type="text"]:focus { outline: none; border-color: var(--primary-color); ba
     color: var(--danger-color);
     border-color: #fecaca;
 }
+/* --- אזור אפליקציות ממתינות לשיבוץ --- */
+.uncategorized-section {
+    background: #fffbeb;
+    border: 1px dashed #f59e0b;
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+    margin-bottom: 25px;
+}
+.uncategorized-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+.uncategorized-dropzone {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-height: 50px;
+    background: rgba(254, 243, 199, 0.4);
+    border-radius: var(--radius-md);
+    padding: 10px;
+}
+.uncategorized-dropzone .app-draggable-item {
+    background: #ffffff;
+    flex: 0 1 260px;
+}
+
