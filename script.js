@@ -500,7 +500,79 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) { }
     };
 
-    saveWhitelistToGitHub 
+    // --- שמירה ישירה ל-GitHub עם מנגנון מניעת קונפליקטים אוטומטי ---
+    const saveWhitelistToGitHub = async () => {
+        if (!githubUser || !githubRepo || !githubToken) { showStatus('שגיאת התחברות.', true); return; }
+        
+        saveButton.disabled = true;
+        const originalText = saveButton.innerText;
+        saveButton.innerText = 'שומר שינויים ב-GitHub... ⏳';
+        showStatus('שומר את לוח האפליקציות שלך ב-GitHub...', false, true);
+
+        try {
+            syncStateFromBoard(); // סנכרון מצב העמודות כפי שהמשתמש סידר
+
+            // פונקציית שמירה עם שליפת SHA עדכני במקרה של קונפליקט
+            const saveFile = async (filename, contentObj, fallbackSha, commitMsg) => {
+                let sha = fallbackSha;
+                const makeBody = (targetSha) => JSON.stringify({
+                    message: commitMsg,
+                    content: encodeUnicode(JSON.stringify(contentObj, null, 2)),
+                    sha: targetSha || undefined
+                });
+
+                let res = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/${filename}`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
+                    body: makeBody(sha)
+                });
+
+                // במקרה של אי-התאמת SHA (קונפליקט 409), שולפים מיד את ה-SHA העדכני מ-GitHub ושומרים שוב
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    if (res.status === 409 || (errData.message && errData.message.includes('does not match'))) {
+                        const freshRes = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/${filename}`, {
+                            headers: { 'Authorization': `token ${githubToken}` }
+                        });
+                        if (freshRes.ok) {
+                            const freshData = await freshRes.json();
+                            sha = freshData.sha;
+                            res = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/${filename}`, {
+                                method: 'PUT',
+                                headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
+                                body: makeBody(sha)
+                            });
+                        }
+                    }
+
+                    if (!res.ok) {
+                        const finalErr = await res.json().catch(() => ({}));
+                        throw new Error(finalErr.message || `שגיאה בשמירת ${filename}`);
+                    }
+                }
+
+                const result = await res.json();
+                return result.content ? result.content.sha : null;
+            };
+
+            // שמירת כל הקבצים בסנכרון מלא
+            fileSHA = await saveFile('whitelist.json', authorizedApps, fileSHA, 'Update apps list') || fileSHA;
+            namesFileSHA = await saveFile('app-names.json', appNames, namesFileSHA, 'Update apps names') || namesFileSHA;
+            catFileSHA = await saveFile('categorized-whitelist.json', categorizedData, catFileSHA, 'Update categorized board') || catFileSHA;
+            iconsFileSHA = await saveFile('app-icons.json', appIcons, iconsFileSHA, 'Update app icons mapping') || iconsFileSHA;
+            requestsFileSHA = await saveFile('pending-requests.json', pendingRequests, requestsFileSHA, 'Sync pending requests') || requestsFileSHA;
+
+            renderPendingRequests();
+            renderCategoriesBoard();
+            showStatus('כל השינויים נשמרו בהצלחה ב-GitHub! 🎉', false);
+        } catch (err) {
+            console.error(err);
+            showStatus(`שגיאה בשמירה: ${err.message}`, true);
+        } finally {
+            saveButton.disabled = false;
+            saveButton.innerText = originalText;
+        }
+    };
 
     // --- חיפוש רב-ערוצי ---
     const searchApps = async () => { 
