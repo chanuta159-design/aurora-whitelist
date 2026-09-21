@@ -31,7 +31,7 @@ body {
     line-height: 1.5;
 }
 
-.container { max-width: 1100px; margin: 0 auto; }
+.container { max-width: 1380px; margin: 0 auto; }
 h1, h2, h3 { color: var(--text-primary); margin: 0; }
 h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; }
 
@@ -117,16 +117,28 @@ input[type="text"]:focus { outline: none; border-color: var(--primary-color); ba
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* --- לוח קטגוריות Kanban --- */
+/* --- לוח קטגוריות Masonry (לבני לגו אסימטרי) --- */
 .categories-board-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px; align-items: start;
+    display: block;         /* ביטול ה-Grid הישן */
+    column-width: 320px;    /* רוחב כל עמודת לגו */
+    column-gap: 20px;       /* מרווח אופקי בין טורים */
+    width: 100%;
 }
+
 .category-column {
-    background: var(--surface-color); border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg); padding: 16px;
-    display: flex; flex-direction: column; box-shadow: var(--shadow-sm);
-    transition: transform 0.2s;
+    break-inside: avoid;                 /* מונע מהקטגוריה להישבר לחצאים */
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+    display: inline-block;               /* מאפשר לערום קוביות זו תחת זו */
+    width: 100%;
+    margin-bottom: 20px;                 /* מרווח אנכי בין קטגוריה לבאה מתחתיה */
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
 }
 .category-column:hover { box-shadow: var(--shadow-md); }
 .category-header {
