@@ -500,57 +500,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) { }
     };
 
-    // --- שמירה ישירה ל-GitHub (ללא שום תלות ב-AI!) ---
-    const saveWhitelistToGitHub = async () => {
-        if (!githubUser || !githubRepo || !githubToken) { showStatus('שגיאת התחברות.', true); return; }
-        
-        saveButton.disabled = true;
-        const originalText = saveButton.innerText;
-        saveButton.innerText = 'שומר שינויים ב-GitHub... ⏳';
-        showStatus('שומר את לוח האפליקציות שלך ב-GitHub...', false, true);
-
-        try {
-            syncStateFromBoard(); // סנכרון מצב העמודות בדיוק כפי שהמשתמש סידר
-
-            const req = (file, content, sha, msg) => fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/${file}`, {
-                method: 'PUT',
-                headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: msg, content: encodeUnicode(JSON.stringify(content, null, 2)), sha: sha || undefined })
-            }).then(async res => {
-                if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(err.message || `שגיאה בשמירת ${file}`);
-                }
-                return res.json();
-            });
-
-            const res1 = await req('whitelist.json', authorizedApps, fileSHA, 'Update apps list');
-            if (res1.content) fileSHA = res1.content.sha;
-
-            const res2 = await req('app-names.json', appNames, namesFileSHA, 'Update apps names');
-            if (res2.content) namesFileSHA = res2.content.sha;
-
-            // שמירת הקטגוריות כפי שסודרו על המסך!
-            const res3 = await req('categorized-whitelist.json', categorizedData, catFileSHA, 'Update categorized board');
-            if (res3.content) catFileSHA = res3.content.sha;
-
-            const res4 = await req('app-icons.json', appIcons, iconsFileSHA, 'Update app icons mapping');
-            if (res4.content) iconsFileSHA = res4.content.sha;
-
-            const res5 = await req('pending-requests.json', pendingRequests, requestsFileSHA, 'Sync pending requests');
-            if (res5.content) requestsFileSHA = res5.content.sha;
-
-            renderPendingRequests();
-            renderCategoriesBoard();
-            showStatus('כל השינויים נשמרו בהצלחה ב-GitHub! 🎉', false);
-        } catch (err) {
-            console.error(err);
-            showStatus(`שגיאה בשמירה: ${err.message}`, true);
-        } finally {
-            saveButton.disabled = false;
-            saveButton.innerText = originalText;
-        }
-    };
+    saveWhitelistToGitHub 
 
     // --- חיפוש רב-ערוצי ---
     const searchApps = async () => { 
