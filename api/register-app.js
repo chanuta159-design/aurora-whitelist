@@ -20,7 +20,7 @@ export default async function handler(request, response) {
 
     const pkg = manifest.packageName.trim();
     const appTitle = manifest.name || manifest.name_en || pkg;
-    const appCategory = manifest.category || 'כלים';
+    const appCategory = (manifest.category || '').trim();
     const appDesc = manifest.description || '';
     const now = new Date().toISOString();
 
@@ -79,7 +79,7 @@ export default async function handler(request, response) {
         let categorized = catFile.content || { "כללי": [] };
         let pendingRequests = requestsFile.content || [];
 
-        // 1. עדכון ברשימת המקורות המאוחדת כ-CUSTOM
+        // 1. עדכון ברשימת המקורות המאוחדת (שומר את התיאור האמיתי של המשתמש!)
         const existingSourceIdx = appSources.findIndex(a => a.packageName === pkg);
         const sourceRecord = {
             packageName: pkg,
@@ -117,13 +117,16 @@ export default async function handler(request, response) {
             appIcons[pkg] = iconUrl;
         }
 
-        // 4. עדכון categorized-whitelist.json
+        // 4. בדיקת קטגוריה: רק אם הקטגוריה שהתבקשה קיימת כבר בלוח - משבצים אותה
+        let categoryUpdated = false;
         const allCategorizedPkgs = new Set(Object.values(categorized).flat());
         if (!allCategorizedPkgs.has(pkg)) {
-            if (!categorized[appCategory]) {
-                categorized[appCategory] = [];
+            if (appCategory && categorized[appCategory]) {
+                categorized[appCategory].push(pkg);
+                categoryUpdated = true;
             }
-            categorized[appCategory].push(pkg);
+            // אם לא קיימת - האפליקציה תישאר מחוץ ל-categorized-whitelist.json
+            // ותופיע אוטומטית בדשבורד במגש של "ממתינות לשיבוץ"!
         }
 
         // 5. ניקוי מ-pending-requests.json אם היה קיים
@@ -137,7 +140,9 @@ export default async function handler(request, response) {
         if (iconUrl) {
             await saveFile('app-icons.json', appIcons, iconsFile.sha, `Update icon for: ${pkg}`);
         }
-        await saveFile('categorized-whitelist.json', categorized, catFile.sha, `Categorize custom app: ${pkg}`);
+        if (categoryUpdated) {
+            await saveFile('categorized-whitelist.json', categorized, catFile.sha, `Categorize custom app into ${appCategory}: ${pkg}`);
+        }
         if (pendingRequests.length !== initialReqCount) {
             await saveFile('pending-requests.json', pendingRequests, requestsFile.sha, `Resolved pending request for: ${pkg}`);
         }
