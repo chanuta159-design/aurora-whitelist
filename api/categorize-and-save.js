@@ -43,24 +43,47 @@ export default async function handler(request, response) {
 
         console.log(`[AI] Found ${newPackages.length} new apps to categorize...`);
 
-        // --- 4. שליפת מידע: קודם מגוגל פליי, ואם לא קיים - ממאגר CFOPUSER ---
+        // --- שליפת מאגר המקורות המאוחד app-sources.json לקבלת תיאורים של אפליקציות עצמאיות ---
+        let customSources = [];
+        try {
+            const sourcesRes = await fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/app-sources.json`, {
+                headers: { 'Authorization': `token ${githubToken}` }
+            });
+            if (sourcesRes.ok) {
+                const sData = await sourcesRes.json();
+                customSources = JSON.parse(Buffer.from(sData.content, 'base64').toString('utf8'));
+            }
+        } catch (_) {}
+
+        // --- 4. שליפת מידע: קודם מ-app-sources.json, אח"כ גוגל פליי, ואח"כ CFOPUSER ---
         const scrapedAppsForPrompt = [];
         const scrapePromises = newPackages.map(async (pkg) => {
             let foundInfo = false;
 
-            // נסיון א': סריקה מגוגל פליי
-            try {
-                const appInfo = await gplay.app({ appId: pkg, lang: 'he', country: 'il' });
-                if (appInfo) {
-                    const shortDesc = (appInfo.description || '').substring(0, 300).replace(/\n/g, ' ');
-                    scrapedAppsForPrompt.push(`Package: "${pkg}", Title: "${appInfo.title}", Category: "${appInfo.genre}", Description: "${shortDesc}"`);
-                    foundInfo = true;
-                }
-            } catch (e) {
-                // לא קיים בגוגל פליי
+            // נסיון א': האם יש תיאור שהמשתמש כתב בעצמו ב-app-sources.json?
+            const customApp = customSources.find(a => a.packageName === pkg);
+            if (customApp && (customApp.description || customApp.name)) {
+                const title = customApp.name || customApp.name_en || pkg;
+                const desc = customApp.description || '';
+                scrapedAppsForPrompt.push(`Package: "${pkg}", Title: "${title}", Category Hint: "${customApp.category || ''}", Description: "${desc}"`);
+                foundInfo = true;
             }
 
-            // נסיון ב': אם לא קיים בגוגל - בדיקה במאגר CFOPUSER
+            // נסיון ב': סריקה מגוגל פליי
+            if (!foundInfo) {
+                try {
+                    const appInfo = await gplay.app({ appId: pkg, lang: 'he', country: 'il' });
+                    if (appInfo) {
+                        const shortDesc = (appInfo.description || '').substring(0, 300).replace(/\n/g, ' ');
+                        scrapedAppsForPrompt.push(`Package: "${pkg}", Title: "${appInfo.title}", Category: "${appInfo.genre}", Description: "${shortDesc}"`);
+                        foundInfo = true;
+                    }
+                } catch (e) {
+                    // לא קיים בגוגל פליי
+                }
+            }
+
+            // נסיון ג': בדיקה במאגר CFOPUSER
             if (!foundInfo) {
                 try {
                     const cfopAppsRes = await fetch("https://raw.githubusercontent.com/cfopuser/app-store/main/apps.json");
@@ -94,11 +117,7 @@ export default async function handler(request, response) {
         });
         await Promise.all(scrapePromises);
 
-        // --- 5. בחירת מודל: gemini-3.8-flash ---
-        const selectedModel = 'gemini-3.8-flash';
-        console.log(`[AI] Using Gemini Model: ${selectedModel}`);
-
-        // --- 6. שאילתה ל-Gemini ---
+        // --- 5. הכנת הפרומפט ל-Gemini ---
         const existingCategoryNames = Object.keys(existingCategories).length > 0 
             ? Object.keys(existingCategories).map(c => `"${c}"`).join(', ')
             : "אין קטגוריות קיימות. צור חדשות.";
@@ -110,39 +129,43 @@ export default async function handler(request, response) {
 ${scrapedAppsForPrompt.join('\n')}
 
 המשימה שלך:
-1. שבץ כל אפליקציה חדשה אל תוך הקטגוריה המתאימה לה ביותר מהקטגוריות הקיימות.
+1. שבץ כל אפליקציה חדשה אל תוך הקטגוריה המתאימה לה ביותר מהקטגוריות הקיימות על פי שמה והתיאור שלה.
 2. מותר לייצר קטגוריה חדשה בעברית (2-4 מילים) אך ורק אם אף קטגוריה קיימת לא מתאימה בכלל.
 3. ודא שכל אפליקציה מופיעה בדיוק פעם אחת.
 
 🚨 אזהרה קריטית 🚨
-שמות החבילות (Package Names) הם מזהי מערכת (באנגלית). אסור לתרגם אותם לעולם! (למשל: "com.metrolist.music" חייב להישאר בדיוק "com.metrolist.music").
+שמות החבילות (Package Names) הם מזהי מערכת (באנגלית). אסור לתרגם אותם לעולם! (למשל: "com.app.mishnat" חייב להישאר בדיוק "com.app.mishnat").
 
 החזר אך ורק אובייקט JSON תקין (בלי תגיות Markdown), במבנה הבא:
 {
   "שם קטגוריה": ["package.name.1", "package.name.2"]
 }`;
 
-        let geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { 
-                    responseMimeType: "application/json" 
-                }
-            })
+        // --- 6. שאילתה ל-Gemini עם מודל מוביל וגיבוי מעודכנים ---
+        const primaryModel = 'gemini-3.8-flash';
+        const fallbackModel = 'gemini-3.7-flash';
+        console.log(`[AI] Querying Gemini model: ${primaryModel}`);
+
+        const requestBody = JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { 
+                responseMimeType: "application/json" 
+            }
         });
 
-        // גיבוי ל-2.5 במקרה ש-3.8 אינו מופעל בחשבון זה
-        if (!geminiResponse.ok && geminiResponse.status === 404) {
-            console.warn(`Model ${selectedModel} not found, trying gemini-2.5-flash`);
-            geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        let geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${primaryModel}:generateContent?key=${GEMINI_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: requestBody
+        });
+
+        // גיבוי ל-3.7 אם 3.8 מחזיר 404 או שגיאת זמינות
+        if (!geminiResponse.ok && (geminiResponse.status === 404 || geminiResponse.status === 503)) {
+            console.warn(`Model ${primaryModel} failed (${geminiResponse.status}), falling back to ${fallbackModel}`);
+            geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${fallbackModel}:generateContent?key=${GEMINI_API_KEY}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { responseMimeType: "application/json" }
-                })
+                body: requestBody
             });
         }
 
@@ -157,7 +180,6 @@ ${scrapedAppsForPrompt.join('\n')}
         const candidate = geminiData.candidates?.[0];
         let rawJsonText = candidate?.content?.parts?.[0]?.text;
         if (!rawJsonText) {
-            console.error('[Gemini Empty Response]:', JSON.stringify(geminiData));
             throw new Error('Gemini returned an empty response or was blocked by safety filters');
         }
 
