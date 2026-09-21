@@ -1,18 +1,1 @@
-[
-  {
-    "packageName": "com.siddur.app",
-    "title": "סידור, תהילים, חוק לישראל",
-    "iconUrl": "https://play-lh.googleusercontent.com/qiZ7zc-cMprvdbpLdzITJMpKhZkBMeiGy7ePqwctZWj_HV2mFHRMjBofQT4yG3hQtdEKdphfp6mJ5J7QxUgpyw",
-    "requestCount": 1,
-    "firstRequestedAt": "2026-09-10T16:55:39.406Z",
-    "lastRequestedAt": "2026-09-10T16:55:39.406Z"
-  },
-  {
-    "packageName": "com.eran.hokleisrael",
-    "title": "חוק לישראל - Hok Leisrael",
-    "iconUrl": "https://play-lh.googleusercontent.com/KHjYV2yNdJ6nZmNbhdj1dyKyXPV0P5Hs7LZyWWn_hbuhFiX3Jvb-_J1R7X2sMX4eewz8ginI4ZxyW6D3RbXf",
-    "requestCount": 1,
-    "firstRequestedAt": "2026-09-15T20:57:46.270Z",
-    "lastRequestedAt": "2026-09-15T20:57:46.270Z"
-  }
-]
+[]
