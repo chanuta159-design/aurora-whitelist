@@ -43,6 +43,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const pendingRequestsList = document.getElementById('pendingRequestsList');
     const requestsCountBadge = document.getElementById('requestsCountBadge');
 
+    // מגש אפליקציות ממתינות לשיבוץ וכפתור AI
+    const uncategorizedSection = document.getElementById('uncategorizedSection');
+    const uncategorizedDropzone = document.getElementById('uncategorizedDropzone');
+    const uncategorizedCount = document.getElementById('uncategorizedCount');
+    const autoCategorizeBtn = document.getElementById('autoCategorizeBtn');
+
     // --- API CREDENTIALS ---
     const GOOGLE_API_KEY = 'AIzaSyD3YjTEIwAnBBIV7LzuRcQVHmTTB27og9o';
     const SEARCH_ENGINE_ID = 'b769d79cff32c40de';
@@ -120,7 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
         requestsCountBadge.textContent = pendingRequests.length;
         pendingRequestsList.innerHTML = '';
 
-        // מיון לפי כמות בקשות יורדת
         const sorted = [...pendingRequests].sort((a, b) => (b.requestCount || 1) - (a.requestCount || 1));
 
         sorted.forEach(req => {
@@ -152,14 +157,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 addApp(req.packageName, displayName, req.iconUrl);
                 pendingRequests = pendingRequests.filter(r => r.packageName !== req.packageName);
                 renderPendingRequests();
-                showStatus(`האפליקציה ${displayName} אושרה ונוספה ללוח! זכור לשמור שינויים.`, false);
+                showStatus(`האפליקציה ${displayName} אושרה ועברה לממתינות לשיבוץ!`, false);
             });
 
             card.querySelector('.btn-sm-reject').addEventListener('click', () => {
                 if (confirm(`האם לדחות את הבקשה עבור ${displayName} (${req.packageName})?`)) {
                     pendingRequests = pendingRequests.filter(r => r.packageName !== req.packageName);
                     renderPendingRequests();
-                    showStatus(`הבקשה עבור ${displayName} נדחתה. זכור לשמור שינויים.`, false);
+                    showStatus(`הבקשה עבור ${displayName} נדחתה.`, false);
                 }
             });
 
@@ -167,20 +172,78 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // --- עזר: יצירת אלמנט כרטיסיית אפליקציה ---
+    const createAppCard = (pkg) => {
+        const idx = authorizedApps.indexOf(pkg);
+        const displayName = (idx > -1 ? appNames[idx] : '') || pkg;
+
+        let iconSrc = appIcons[pkg];
+        if (iconSrc) {
+            if (iconSrc.includes('googleusercontent.com')) {
+                iconSrc = iconSrc.split('=')[0] + '=w128-h128-rw';
+            }
+        } else {
+            iconSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName.charAt(0))}&background=e2e8f0&color=4f46e5&font-size=0.5&bold=true`;
+        }
+
+        const card = document.createElement('div');
+        card.className = 'app-draggable-item';
+        card.dataset.pkg = pkg;
+        card.innerHTML = `
+            <div class="app-item-content">
+                <img src="${iconSrc}" class="app-icon" alt="${displayName}" loading="lazy" />
+                <div class="app-info" title="${displayName}\n${pkg}">
+                    <strong>${displayName}</strong>
+                    <small>${pkg}</small>
+                </div>
+            </div>
+            <button class="remove-app-btn" title="הסר מהרשימה">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+            </button>
+        `;
+        card.querySelector('.remove-app-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeApp(pkg);
+        });
+        return card;
+    };
+
     // --- RENDER BOARD ---
     const renderCategoriesBoard = () => {
         if (!categoriesBoardDiv) return;
         categoriesBoardDiv.innerHTML = '';
 
+        // 1. זיהוי אפליקציות שטרם שובצו לקטגוריה
         const categorizedPkgs = new Set(Object.values(categorizedData).flat());
-        authorizedApps.forEach((pkg) => {
-            if (!categorizedPkgs.has(pkg)) {
-                const firstCat = Object.keys(categorizedData)[0] || "כללי";
-                if (!categorizedData[firstCat]) categorizedData[firstCat] = [];
-                categorizedData[firstCat].push(pkg);
-            }
-        });
+        const uncategorizedPkgs = authorizedApps.filter(pkg => !categorizedPkgs.has(pkg));
 
+        // 2. עדכון מגש אפליקציות ממתינות לשיבוץ
+        if (uncategorizedSection && uncategorizedDropzone) {
+            if (uncategorizedPkgs.length > 0) {
+                uncategorizedSection.classList.remove('hidden');
+                if (uncategorizedCount) uncategorizedCount.textContent = uncategorizedPkgs.length;
+                uncategorizedDropzone.innerHTML = '';
+
+                uncategorizedPkgs.forEach(pkg => {
+                    uncategorizedDropzone.appendChild(createAppCard(pkg));
+                });
+
+                if (window.Sortable) {
+                    new Sortable(uncategorizedDropzone, {
+                        group: 'shared-categories',
+                        animation: 200,
+                        ghostClass: 'sortable-ghost',
+                        forceFallback: true,
+                        fallbackClass: 'sortable-fallback',
+                        onEnd: syncStateFromBoard
+                    });
+                }
+            } else {
+                uncategorizedSection.classList.add('hidden');
+            }
+        }
+
+        // 3. רינדור עמודות הקטגוריות
         for (const [categoryName, packages] of Object.entries(categorizedData)) {
             const catCol = document.createElement('div');
             catCol.className = 'category-column';
@@ -200,36 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             packages.forEach(pkg => {
                 if (authorizedApps.includes(pkg)) {
-                    const idx = authorizedApps.indexOf(pkg);
-                    const displayName = appNames[idx] || pkg;
-                    
-                    let iconSrc = appIcons[pkg];
-                    if (iconSrc) {
-                        // מוסיפים סיומת שינוי גודל אך ורק לתמונות שרת של Google Play
-                        if (iconSrc.includes('googleusercontent.com')) {
-                            iconSrc = iconSrc.split('=')[0] + '=w128-h128-rw';
-                        }
-                    } else {
-                        iconSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName.charAt(0))}&background=e2e8f0&color=4f46e5&font-size=0.5&bold=true`;
-                    }
-                    
-                    const card = document.createElement('div');
-                    card.className = 'app-draggable-item';
-                    card.dataset.pkg = pkg;
-                    card.innerHTML = `
-                        <div class="app-item-content">
-                            <img src="${iconSrc}" class="app-icon" alt="${displayName}" loading="lazy" />
-                            <div class="app-info" title="${displayName}\n${pkg}">
-                                <strong>${displayName}</strong>
-                                <small>${pkg}</small>
-                            </div>
-                        </div>
-                        <button class="remove-app-btn" title="הסר מהרשימה">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"></path></svg>
-                        </button>
-                    `;
-                    card.querySelector('.remove-app-btn').addEventListener('click', () => removeApp(pkg));
-                    dropzone.appendChild(card);
+                    dropzone.appendChild(createAppCard(pkg));
                 }
             });
 
@@ -267,10 +301,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     animation: 200,
                     ghostClass: 'sortable-ghost',
                     easing: "cubic-bezier(0.25, 1, 0.5, 1)",
-                    scroll: true,             
-                    scrollSensitivity: 80,    
-                    scrollSpeed: 20,          
-                    bubbleScroll: true,       
                     forceFallback: true,      
                     fallbackClass: 'sortable-fallback', 
                     onEnd: syncStateFromBoard
@@ -285,10 +315,22 @@ document.addEventListener('DOMContentLoaded', () => {
         columns.forEach(col => {
             const catName = col.querySelector('.category-title').innerText.trim();
             const pkgs = [];
-            col.querySelectorAll('.app-draggable-item').forEach(item => pkgs.push(item.dataset.pkg));
+            col.querySelectorAll('.apps-dropzone .app-draggable-item').forEach(item => pkgs.push(item.dataset.pkg));
             if (catName) newCatData[catName] = pkgs;
         });
         categorizedData = newCatData;
+
+        // עדכון מונה אפליקציות ממתינות
+        const categorizedPkgs = new Set(Object.values(categorizedData).flat());
+        const uncategorizedPkgs = authorizedApps.filter(pkg => !categorizedPkgs.has(pkg));
+        if (uncategorizedSection) {
+            if (uncategorizedPkgs.length > 0) {
+                uncategorizedSection.classList.remove('hidden');
+                if (uncategorizedCount) uncategorizedCount.textContent = uncategorizedPkgs.length;
+            } else {
+                uncategorizedSection.classList.add('hidden');
+            }
+        }
     };
 
     // --- ADD / REMOVE FUNCTIONS ---
@@ -301,12 +343,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 appIcons[pkg] = iconUrl.split('=')[0];
             }
             
-            const firstCat = Object.keys(categorizedData)[0] || "כללי";
-            if (!categorizedData[firstCat]) categorizedData[firstCat] = [];
-            categorizedData[firstCat].push(pkg);
-
+            // אפליקציה חדשה מגיעה ישירות למגש הממתינות לשיבוץ
             renderCategoriesBoard();
-            showStatus(`נוסף בהצלחה: ${title} (ייקוטלג אוטומטית בעת השמירה)`, false);
+            showStatus(`נוסף בהצלחה: ${title} (ממתין לשיבוץ בקטגוריה)`, false);
         } else {
             alert(`האפליקציה ${title} (${pkg}) כבר קיימת ברשימה.`);
         }
@@ -461,47 +500,39 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) { }
     };
 
-    // --- שמירה עם מיון AI אוטומטי ---
+    // --- שמירה ישירה ל-GitHub (ללא שום תלות ב-AI!) ---
     const saveWhitelistToGitHub = async () => {
         if (!githubUser || !githubRepo || !githubToken) { showStatus('שגיאת התחברות.', true); return; }
         
         saveButton.disabled = true;
         const originalText = saveButton.innerText;
-        saveButton.innerText = 'מקטלג ושומר עם AI... 🤖';
-        showStatus('ה-AI סורק ומקטלג אפליקציות חדשות, אנא המתן... ⏳', false, true);
+        saveButton.innerText = 'שומר שינויים ב-GitHub... ⏳';
+        showStatus('שומר את לוח האפליקציות שלך ב-GitHub...', false, true);
 
         try {
-            const aiRes = await fetch('/api/categorize-and-save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    authorizedApps: authorizedApps,
-                    githubToken: githubToken,
-                    githubUser: githubUser,
-                    githubRepo: githubRepo
-                })
-            });
-
-            const aiData = await aiRes.json();
-            if (!aiRes.ok) {
-                throw new Error(aiData.error || 'שגיאה בקטלוג ה-AI');
-            }
-
-            if (aiData.categories) {
-                categorizedData = aiData.categories;
-            }
+            syncStateFromBoard(); // סנכרון מצב העמודות בדיוק כפי שהמשתמש סידר
 
             const req = (file, content, sha, msg) => fetch(`https://api.github.com/repos/${githubUser}/${githubRepo}/contents/${file}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: msg, content: encodeUnicode(JSON.stringify(content, null, 2)), sha: sha || undefined })
-            }).then(res => res.json());
+            }).then(async res => {
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.message || `שגיאה בשמירת ${file}`);
+                }
+                return res.json();
+            });
 
             const res1 = await req('whitelist.json', authorizedApps, fileSHA, 'Update apps list');
             if (res1.content) fileSHA = res1.content.sha;
 
             const res2 = await req('app-names.json', appNames, namesFileSHA, 'Update apps names');
             if (res2.content) namesFileSHA = res2.content.sha;
+
+            // שמירת הקטגוריות כפי שסודרו על המסך!
+            const res3 = await req('categorized-whitelist.json', categorizedData, catFileSHA, 'Update categorized board');
+            if (res3.content) catFileSHA = res3.content.sha;
 
             const res4 = await req('app-icons.json', appIcons, iconsFileSHA, 'Update app icons mapping');
             if (res4.content) iconsFileSHA = res4.content.sha;
@@ -511,7 +542,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             renderPendingRequests();
             renderCategoriesBoard();
-            showStatus('כל השינויים והבקשות נשמרו בהצלחה ב-GitHub! 🎉', false);
+            showStatus('כל השינויים נשמרו בהצלחה ב-GitHub! 🎉', false);
         } catch (err) {
             console.error(err);
             showStatus(`שגיאה בשמירה: ${err.message}`, true);
@@ -672,6 +703,42 @@ document.addEventListener('DOMContentLoaded', () => {
                     categorizedData[name.trim()] = [];
                     renderCategoriesBoard();
                 }
+            }
+        });
+    }
+
+    // הפעלת ה-AI באופן עצמאי רק לפי דרישה
+    if (autoCategorizeBtn) {
+        autoCategorizeBtn.addEventListener('click', async () => {
+            autoCategorizeBtn.disabled = true;
+            autoCategorizeBtn.innerText = 'מקטלג... 🤖';
+            showStatus('ה-AI מקטלג אפליקציות ממתינות...', false, true);
+
+            try {
+                const aiRes = await fetch('/api/categorize-and-save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        authorizedApps: authorizedApps,
+                        githubToken: githubToken,
+                        githubUser: githubUser,
+                        githubRepo: githubRepo
+                    })
+                });
+                const aiData = await aiRes.json();
+                if (!aiRes.ok) throw new Error(aiData.error || 'שגיאת AI');
+
+                if (aiData.categories) {
+                    categorizedData = aiData.categories;
+                    renderCategoriesBoard();
+                    showStatus('האפליקציות קוטלגו בהצלחה! זכור ללחוץ על "שמור שינויים ב-GitHub".', false);
+                }
+            } catch (err) {
+                console.error(err);
+                showStatus(`ה-AI נכשל: ${err.message}. תוכל לגרור אותן ידנית!`, true);
+            } finally {
+                autoCategorizeBtn.disabled = false;
+                autoCategorizeBtn.innerText = '🪄 קטלג עם AI';
             }
         });
     }
