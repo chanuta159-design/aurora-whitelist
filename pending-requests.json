@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "packageName": "com.google.android.deskclock",
+    "title": "שעון",
+    "iconUrl": "https://play-lh.googleusercontent.com/EuxRXLT112vxErcVv9RH7qlZcO4nhnQ0gDMbnCWTgUTzCT0ahKah1HR6B3Xc2VYSD3wCG-bDmlJXwDWVn3in",
+    "requestCount": 1,
+    "firstRequestedAt": "2026-09-22T03:15:23.469Z",
+    "lastRequestedAt": "2026-09-22T03:15:23.469Z"
+  }
+]
