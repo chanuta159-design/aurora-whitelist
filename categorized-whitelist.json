@@ -111,14 +111,16 @@
     "il.idf.doch1",
     "il.idf.zuzu",
     "com.shift.idf",
-    "com.idf.mitgaisim"
+    "com.idf.mitgaisim",
+    "gov.idf.nodoots"
   ],
   "כלים": [
     "com.osapps.airremote",
     "com.alphainventor.filemanager",
     "com.niki.filemanagerplus",
     "com.fileplusss.mage",
-    "com.mtv.sai"
+    "com.mtv.sai",
+    "com.google.android.deskclock"
   ],
   "קניות וצרכנות": [
     "com.app.mishnat"
