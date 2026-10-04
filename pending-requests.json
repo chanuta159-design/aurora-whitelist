@@ -30,5 +30,13 @@
     "requestCount": 1,
     "firstRequestedAt": "2026-10-01T22:50:00.352Z",
     "lastRequestedAt": "2026-10-01T22:50:00.352Z"
+  },
+  {
+    "packageName": "com.google.android.calculator",
+    "title": "מחשבון",
+    "iconUrl": "https://play-lh.googleusercontent.com/VBPoo5bxW4MYDd6pZLZ6W8XqyvubpatbvF55sYJaIzDqyMg2GK_tg3Nopo2rHAXc8NJMKPyL7RI8zoP_J6r8tmY",
+    "requestCount": 1,
+    "firstRequestedAt": "2026-10-04T14:49:36.540Z",
+    "lastRequestedAt": "2026-10-04T14:49:36.540Z"
   }
 ]
