@@ -32,27 +32,11 @@
     "lastRequestedAt": "2026-10-01T22:50:00.352Z"
   },
   {
-    "packageName": "com.google.android.calculator",
-    "title": "מחשבון",
-    "iconUrl": "https://play-lh.googleusercontent.com/VBPoo5bxW4MYDd6pZLZ6W8XqyvubpatbvF55sYJaIzDqyMg2GK_tg3Nopo2rHAXc8NJMKPyL7RI8zoP_J6r8tmY",
-    "requestCount": 1,
-    "firstRequestedAt": "2026-10-04T14:49:36.540Z",
-    "lastRequestedAt": "2026-10-04T14:49:36.540Z"
-  },
-  {
     "packageName": "com.qidian.Int.reader",
     "title": "WebNovel",
     "iconUrl": "https://play-lh.googleusercontent.com/ppMqrO1KUSxO3VDoIxOp2RZboAdjk5Ql5zgVsL9hbCZC-ggT5y1XLbitSTwGD01LPVJtSEDugKad0IGPkfQZWec",
     "requestCount": 1,
     "firstRequestedAt": "2026-10-05T17:13:10.232Z",
     "lastRequestedAt": "2026-10-05T17:13:10.232Z"
-  },
-  {
-    "packageName": "com.microsoft.teams",
-    "title": "Microsoft Teams",
-    "iconUrl": "https://play-lh.googleusercontent.com/afnciqsoxrp8BYGFAS_BZtUBn2NvmxTVoKFproR5SljREfTBnueRjPxzxCXvIJNYTUdbtOWz-_GjVuOCMfi7fiU",
-    "requestCount": 1,
-    "firstRequestedAt": "2026-10-06T20:24:14.155Z",
-    "lastRequestedAt": "2026-10-06T20:24:14.155Z"
   }
 ]
