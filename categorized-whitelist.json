@@ -71,7 +71,8 @@
     "com.google.android.contacts",
     "mitmachim.top",
     "us.zoom.videomeetings",
-    "com.truecaller"
+    "com.truecaller",
+    "com.microsoft.teams"
   ],
   "פרודוקטיביות": [
     "com.google.android.apps.docs",
@@ -120,7 +121,8 @@
     "com.niki.filemanagerplus",
     "com.fileplusss.mage",
     "com.mtv.sai",
-    "com.google.android.deskclock"
+    "com.google.android.deskclock",
+    "com.google.android.calculator"
   ],
   "קניות וצרכנות": [
     "com.app.mishnat"
