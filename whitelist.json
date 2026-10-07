@@ -102,5 +102,7 @@
   "com.google.android.apps.chromecast.app",
   "com.app.mishnat",
   "com.google.android.deskclock",
-  "gov.idf.nodoots"
+  "gov.idf.nodoots",
+  "com.microsoft.teams",
+  "com.google.android.calculator"
 ]
