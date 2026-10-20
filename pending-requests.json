@@ -46,5 +46,13 @@
     "requestCount": 1,
     "firstRequestedAt": "2026-10-07T21:38:32.341Z",
     "lastRequestedAt": "2026-10-07T21:38:32.341Z"
+  },
+  {
+    "packageName": "com.mobitti.gordon",
+    "title": "גורדון-App",
+    "iconUrl": "https://play-lh.googleusercontent.com/vfql30KO1xCSuF7rwUQ_xn4bBaL-_OY08PrLSFTU-j5OK4uS64AJn5I7Pf-G0qdHMz7KP_AnR52KhC0aWFGUlg",
+    "requestCount": 1,
+    "firstRequestedAt": "2026-10-20T18:58:18.333Z",
+    "lastRequestedAt": "2026-10-20T18:58:18.333Z"
   }
 ]
