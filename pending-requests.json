@@ -38,21 +38,5 @@
     "requestCount": 1,
     "firstRequestedAt": "2026-10-05T17:13:10.232Z",
     "lastRequestedAt": "2026-10-05T17:13:10.232Z"
-  },
-  {
-    "packageName": "com.uh.sf",
-    "title": "איחוד הצלה כוננים",
-    "iconUrl": "https://play-lh.googleusercontent.com/v2UmwWHG_eDFc3vxk61uQhizDN6HmUhUoy6MQJ0gWSmz2q5JVUiATI6_Sa4osVNOzvfmIpyOHdlB1VADo1xibrI",
-    "requestCount": 1,
-    "firstRequestedAt": "2026-10-07T21:38:32.341Z",
-    "lastRequestedAt": "2026-10-07T21:38:32.341Z"
-  },
-  {
-    "packageName": "com.mobitti.gordon",
-    "title": "גורדון-App",
-    "iconUrl": "https://play-lh.googleusercontent.com/vfql30KO1xCSuF7rwUQ_xn4bBaL-_OY08PrLSFTU-j5OK4uS64AJn5I7Pf-G0qdHMz7KP_AnR52KhC0aWFGUlg",
-    "requestCount": 1,
-    "firstRequestedAt": "2026-10-20T18:58:18.333Z",
-    "lastRequestedAt": "2026-10-20T18:58:18.333Z"
   }
 ]
