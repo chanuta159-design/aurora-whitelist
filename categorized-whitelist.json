@@ -62,7 +62,8 @@
     "org.meuhedet.android",
     "leumit.mobile",
     "com.strava",
-    "com.connect_computer.boostnew"
+    "com.connect_computer.boostnew",
+    "com.uh.sf"
   ],
   "תקשורת, דוא\"ל וקהילה": [
     "com.whatsapp",
@@ -126,5 +127,8 @@
   ],
   "קניות וצרכנות": [
     "com.app.mishnat"
+  ],
+  "חינוך, לימודים והשכלה": [
+    "com.mobitti.gordon"
   ]
 }
