@@ -3,33 +3,33 @@
     "packageName": "com.greenshpits.RLive",
     "title": "RLive רדיו - תחנות רדיו ישראלי",
     "iconUrl": "https://play-lh.googleusercontent.com/qREHa7xDeUAXhjqiJguM6CW5vCIMO62BmfhPXAqcWpxLMnX0KKe3ivwnUvvK_oB-c0_eWVwNBZL29O1nU8nn",
-    "requestCount": 1,
+    "requestCount": 2,
     "firstRequestedAt": "2026-10-01T22:50:00.352Z",
-    "lastRequestedAt": "2026-10-01T22:50:00.352Z"
+    "lastRequestedAt": "2026-10-20T19:37:15.588Z"
   },
   {
     "packageName": "com.rgidon.androidauto",
     "title": "רדיו ישראלי מקורי Israel Radio",
     "iconUrl": "https://play-lh.googleusercontent.com/qSgZQERwHSCKBW11QYd1_qZcpD-2lfv0K2so7uVKApBeRCHYANAHk3YvqzjSXkT3M5Lve_r5988VWGhl_o_7VQ",
-    "requestCount": 1,
+    "requestCount": 2,
     "firstRequestedAt": "2026-10-01T22:50:00.352Z",
-    "lastRequestedAt": "2026-10-01T22:50:00.352Z"
+    "lastRequestedAt": "2026-10-20T19:37:15.588Z"
   },
   {
     "packageName": "com.streema.simpleradio",
     "title": "רדיו פשוט תחנות רדיו FM AM בחי",
     "iconUrl": "https://play-lh.googleusercontent.com/LYs9q_wGYY3cO-FZMgsKcR5c8htZJxRCuDSmQ_F-rVfW7EwJ45eHHZTmnlm8jR_wR0Kh_V7Iz-xw3Q-WBW2WBdU",
-    "requestCount": 1,
+    "requestCount": 2,
     "firstRequestedAt": "2026-10-01T22:50:00.352Z",
-    "lastRequestedAt": "2026-10-01T22:50:00.352Z"
+    "lastRequestedAt": "2026-10-20T19:37:15.588Z"
   },
   {
     "packageName": "online.live.iradio.il",
     "title": "רדיו ישראל-כל התחנות הטובות",
     "iconUrl": "https://play-lh.googleusercontent.com/XsW_Qwh6CLTGZ3vcUzRIXkUEunnt2-umU4NKHhoCfX-TOJmgIknO23-XmxnSwnpRjPSthwCXtu1HaVijpRt9Hw",
-    "requestCount": 1,
+    "requestCount": 2,
     "firstRequestedAt": "2026-10-01T22:50:00.352Z",
-    "lastRequestedAt": "2026-10-01T22:50:00.352Z"
+    "lastRequestedAt": "2026-10-20T19:37:15.588Z"
   },
   {
     "packageName": "com.qidian.Int.reader",
@@ -38,5 +38,45 @@
     "requestCount": 1,
     "firstRequestedAt": "2026-10-05T17:13:10.232Z",
     "lastRequestedAt": "2026-10-05T17:13:10.232Z"
+  },
+  {
+    "packageName": "kaplandev.allfmplayer",
+    "title": "All-FM תחנות רדיו בישראל בקליק",
+    "iconUrl": "https://play-lh.googleusercontent.com/PdN--Zci8V557BlMsVbSCEF64W9nBNIJjriR_YYFXoAPpUKPc-w1V73W7sCPzJipJOVsIpy2bpGsGX4Gyupc8f8",
+    "requestCount": 1,
+    "firstRequestedAt": "2026-10-20T19:37:15.588Z",
+    "lastRequestedAt": "2026-10-20T19:37:15.588Z"
+  },
+  {
+    "packageName": "radio.israel.fm",
+    "title": "(radio israel) רדיו ישראלי",
+    "iconUrl": "https://play-lh.googleusercontent.com/Ag8elrpIVp05_8H66uYEe9CbFK-G23SbTFnA9lj_4XgUBhQ1F8bL3mH4MWEZ7UouHgx_or4xLBTiWU4GQuR_QKo",
+    "requestCount": 1,
+    "firstRequestedAt": "2026-10-20T19:37:15.588Z",
+    "lastRequestedAt": "2026-10-20T19:37:15.588Z"
+  },
+  {
+    "packageName": "com.radio.fmradio",
+    "title": "רדיו FM",
+    "iconUrl": "https://play-lh.googleusercontent.com/jZGhel5jMPnqFeFADaqcPWHwUV72UCPwujEYAVnN1RZRUFePdkGnmEBSyMwaurQuv4HIEcG7149Y9f22oiQHRQ",
+    "requestCount": 1,
+    "firstRequestedAt": "2026-10-20T19:37:15.588Z",
+    "lastRequestedAt": "2026-10-20T19:37:15.588Z"
+  },
+  {
+    "packageName": "com.radiosonline.radiofmisrael",
+    "title": "רדיו ישראלי - radio israel",
+    "iconUrl": "https://play-lh.googleusercontent.com/iZIMxkrtTfW6OHhsl4kn8HlwlnlzYAqQCLr6u3EnMxDG8FsOd5Lv5Y8PuPE00yeJJYi8XyWRwBhunX6jeNNBvw",
+    "requestCount": 1,
+    "firstRequestedAt": "2026-10-20T19:37:15.588Z",
+    "lastRequestedAt": "2026-10-20T19:37:15.588Z"
+  },
+  {
+    "packageName": "com.stayfprod.awesomeradio.free",
+    "title": "רדיו אונליין: ישראל והעולם",
+    "iconUrl": "https://play-lh.googleusercontent.com/QL9c4yf8UTtj_nvi-TR4JyYpJht0D1P5vn42QxT1GB_OttEs5o1hYrGEjXOQNEpSmvcozoHXDmwOKe3ocgVeo3Y",
+    "requestCount": 1,
+    "firstRequestedAt": "2026-10-20T19:37:15.588Z",
+    "lastRequestedAt": "2026-10-20T19:37:15.588Z"
   }
 ]
