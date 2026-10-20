@@ -78,5 +78,13 @@
     "requestCount": 1,
     "firstRequestedAt": "2026-10-20T19:37:15.588Z",
     "lastRequestedAt": "2026-10-20T19:37:15.588Z"
+  },
+  {
+    "packageName": "com.rbs.kosheradio",
+    "title": "KosherRadio - רדיו כשר",
+    "iconUrl": "https://play-lh.googleusercontent.com/FI7mqblZm6qti5n6F4iJL4Uh4jOwQzDqiJ7UvOeR9jOGPeyi1hCUOtGrAmxZPgV2ceMRGdtskw-gpcDaX2IRvkk",
+    "requestCount": 1,
+    "firstRequestedAt": "2026-10-20T20:07:16.009Z",
+    "lastRequestedAt": "2026-10-20T20:07:16.009Z"
   }
 ]
