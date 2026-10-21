@@ -27,7 +27,8 @@
     "com.ozvehadar.sfard",
     "appinventor.ai_yonimixx.Siduron",
     "com.eran.hokleisrael",
-    "com.siddur.app"
+    "com.siddur.app",
+    "com.mogy.dafyomi"
   ],
   "תחבורה, רכב וניווט": [
     "com.waze",
@@ -108,7 +109,8 @@
     "com.spotify.music",
     "com.oceanwing.soundcore",
     "com.google.android.apps.chromecast.app",
-    "com.rbs.kosheradio"
+    "com.rbs.kosheradio",
+    "com.greenshpits.RLive"
   ],
   "צבא ובטחון פנים": [
     "il.idf.doch1",
