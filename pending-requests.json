@@ -94,5 +94,13 @@
     "requestCount": 1,
     "firstRequestedAt": "2026-10-30T06:32:35.229Z",
     "lastRequestedAt": "2026-10-30T06:32:35.229Z"
+  },
+  {
+    "packageName": "com.highlight.studio",
+    "title": "Highlight Studio",
+    "iconUrl": "https://play-lh.googleusercontent.com/y0C-1otf0nhfmi3np2J3WPiphetmDAQ6m1_30jWOjIGmQlFvS57XcqnQiQQUEeQwO51h3nUTfuZNYpByc3AuZw",
+    "requestCount": 1,
+    "firstRequestedAt": "2026-10-30T23:20:53.414Z",
+    "lastRequestedAt": "2026-10-30T23:20:53.414Z"
   }
 ]
