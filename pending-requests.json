@@ -86,5 +86,13 @@
     "requestCount": 1,
     "firstRequestedAt": "2026-10-21T12:45:33.229Z",
     "lastRequestedAt": "2026-10-21T12:45:33.229Z"
+  },
+  {
+    "packageName": "com.google.android.apps.tips",
+    "title": "My Pixel app",
+    "iconUrl": "https://play-lh.googleusercontent.com/LyC33VYySD8XpqyUNGZaNK_p5YgNkPhYlwrgBRuj9bFCXnjX1jcIifxiu2yQgLpz0s-zK4S2sv7E9ZBWjCi6",
+    "requestCount": 1,
+    "firstRequestedAt": "2026-10-30T06:32:35.229Z",
+    "lastRequestedAt": "2026-10-30T06:32:35.229Z"
   }
 ]
