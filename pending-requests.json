@@ -110,5 +110,13 @@
     "requestCount": 1,
     "firstRequestedAt": "2026-10-30T23:20:59.362Z",
     "lastRequestedAt": "2026-10-30T23:20:59.362Z"
+  },
+  {
+    "packageName": "rk.android.app.shortcutmaker",
+    "title": "Shortcut Maker",
+    "iconUrl": "https://play-lh.googleusercontent.com/XKnRJ3FCCwaDnC8XLzIHLeYnQegQ_YIHnR9lEPdIHhyQ6_0l-KJAL04w00a0udcx56yYZKHTXwBOGrJZVg-r",
+    "requestCount": 1,
+    "firstRequestedAt": "2026-11-05T15:25:27.046Z",
+    "lastRequestedAt": "2026-11-05T15:25:27.046Z"
   }
 ]
