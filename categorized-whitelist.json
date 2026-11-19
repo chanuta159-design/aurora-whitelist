@@ -7,8 +7,8 @@
     "il.co.hamichlol",
     "il.co.tikkunhaklali",
     "com.khl.kiosk",
-    "com.khl.www2",
     "androidYeshiva.apps.yeshiva.yeshivawebsite",
+    "com.khl.www2",
     "com.kosharot.simulator",
     "com.nedarim.nedarimplus",
     "com.minyan",
@@ -91,9 +91,10 @@
     "com.alert.meserhadash",
     "moe.shizuku.privileged.api",
     "com.emanuelef.remote_capture",
+    "com.google.android.apps.kids.familylinkhelper",
     "com.google.android.apps.adm",
-    "com.google.android.apps.kids.familylink",
-    "com.google.android.apps.kids.familylinkhelper"
+    "twitch.angelandroidapps.cnf2",
+    "com.google.android.apps.kids.familylink"
   ],
   "בית חכם, מדיה ופנאי": [
     "com.tuya.smart",
